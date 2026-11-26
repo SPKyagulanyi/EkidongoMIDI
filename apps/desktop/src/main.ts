@@ -116,9 +116,21 @@ function command(cmd: EngineCommand) {
   engine?.command(cmd, rustNow());
 }
 
+/** "live drums" for styles with real drummer performances, "draft" for the programmed prototypes. */
+function kindOf(s: Style): string {
+  if (s.credits.some((c) => c.name.startsWith('Groove MIDI Dataset'))) return 'live drums';
+  return s.status === 'prototype' ? 'draft' : s.status;
+}
+
+/** Attribution required by the drum licence (CC BY 4.0), shown wherever the style is described. */
+function creditOf(s: Style): string {
+  return s.credits.some((c) => c.name.startsWith('Groove MIDI Dataset')) ? 'Drums: Groove MIDI Dataset (Google, CC BY 4.0)' : '';
+}
+
 function showStyle(s: Style) {
   $('styleName').textContent = s.name;
-  $('styleMeta').textContent = `${s.category} · ${s.timeSignature.join('/')} · ${s.status === 'prototype' ? 'draft style' : s.status}`;
+  $('styleMeta').textContent = [s.category, s.timeSignature.join('/'), kindOf(s)].join(' · ');
+  $('styleMeta').title = creditOf(s);
 }
 
 function selectStyle(i: number) {
@@ -172,8 +184,15 @@ function renderBrowser() {
     name.textContent = s.name;
     const meta = document.createElement('span');
     meta.className = 'muted small';
-    meta.textContent = `${s.category} · ${s.timeSignature.join('/')} · ${Math.round(s.tempo)} BPM`;
+    meta.textContent = `${s.timeSignature.join('/')} · ${Math.round(s.tempo)} BPM · ${kindOf(s)}`;
     b.append(name, meta);
+    const credit = creditOf(s);
+    if (credit) {
+      const c = document.createElement('span');
+      c.className = 'muted small';
+      c.textContent = credit;
+      b.append(c);
+    }
     b.addEventListener('click', () => {
       selectStyle(i);
       closeBrowser();

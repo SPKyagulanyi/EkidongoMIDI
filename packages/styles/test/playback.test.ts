@@ -1,15 +1,17 @@
 import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ArrangerEngine, makeChord, validateStyle, type MidiEvent } from '@ekidongo/engine';
 
-const dir = join(import.meta.dirname, '..', 'prototype');
-const files = readdirSync(dir).filter((f) => f.endsWith('.json'));
+const dirs = ['prototype', 'live'].map((d) => join(import.meta.dirname, '..', d));
+const paths = dirs.flatMap((d) => readdirSync(d).filter((f) => f.endsWith('.json')).map((f) => join(d, f)));
+const files = paths.map((p) => basename(p));
+const pathOf = (file: string) => paths[files.indexOf(file)]!;
 const isOn = (e: MidiEvent) => (e.data[0]! & 0xf0) === 0x90 && e.data[2]! > 0;
 
 describe('every library style plays', () => {
   it.each(files)('%s: 30 s with chord changes and a section change, no stuck notes', (file) => {
-    const r = validateStyle(JSON.parse(readFileSync(join(dir, file), 'utf8')));
+    const r = validateStyle(JSON.parse(readFileSync(pathOf(file), 'utf8')));
     if (!r.ok) throw new Error(r.errors.join('\n'));
     const eng = new ArrangerEngine(r.style);
     const all: MidiEvent[] = [];

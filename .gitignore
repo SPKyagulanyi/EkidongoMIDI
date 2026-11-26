@@ -14,3 +14,6 @@ __pycache__/
 target/
 # Tauri generated schemas
 apps/desktop/src-tauri/gen/
+
+# Downloaded third-party datasets (licences in NOTICE.md; derived styles are committed)
+third_party/

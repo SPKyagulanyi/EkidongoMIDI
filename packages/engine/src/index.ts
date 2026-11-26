@@ -3,6 +3,7 @@ export * from './chords.ts';
 export * from './style/schema.ts';
 export * from './style/grid.ts';
 export * from './style/derive.ts';
+export * from './midi/smf.ts';
 export * from './play/repitch.ts';
 export * from './play/arrangement.ts';
 export * from './play/player.ts';
