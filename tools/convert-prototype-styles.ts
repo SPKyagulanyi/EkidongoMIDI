@@ -6,7 +6,19 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { compileGridStyle, validateStyle, type GridStyle } from '../packages/engine/src/index.ts';
+import { compileGridStyle, deriveMissingSections, validateStyle, type GridStyle } from '../packages/engine/src/index.ts';
+
+/** Browser categories (Genos-style: pick a category, then a style). */
+const CATEGORY: Record<string, string> = {
+  'afrobeat': 'African', 'amapiano': 'African', 'highlife': 'African', 'kwaito': 'African', 'rumba-soukous': 'African',
+  'kadongo-kamu': 'East African', 'ganda-kiganda': 'East African', 'kinyankole': 'East African', 'bongo-flava': 'East African',
+  'gospel-12-8': 'Church', 'praise-worship': 'Church',
+  'reggae-one-drop': 'Caribbean', 'reggae-rockers': 'Caribbean', 'lovers-rock': 'Caribbean', 'dancehall': 'Caribbean', 'zouk': 'Caribbean',
+  'reggaeton': 'Latin',
+  'pop-8-beat': 'Pop & RnB', 'ballad': 'Pop & RnB', 'rnb': 'Pop & RnB',
+  'waltz-3-4': 'Ballroom & March', 'foxtrot': 'Ballroom & March', 'march': 'Ballroom & March', 'march-6-8': 'Ballroom & March',
+};
+const slug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 const src = process.argv[2] ?? join(homedir(), 'Documents', 'PianoArranger', 'styles.json');
 const outDir = join(import.meta.dirname, '..', 'packages', 'styles', 'prototype');
@@ -15,7 +27,7 @@ mkdirSync(outDir, { recursive: true });
 const grids = (JSON.parse(readFileSync(src, 'utf8')) as { styles: GridStyle[] }).styles;
 let failed = 0;
 for (const grid of grids) {
-  const style = compileGridStyle(grid);
+  const style = deriveMissingSections(compileGridStyle(grid, CATEGORY[slug(grid.name)] ?? 'Other'));
   const r = validateStyle(style);
   if (!r.ok) {
     failed++;

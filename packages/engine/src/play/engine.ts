@@ -73,6 +73,10 @@ export interface EngineStatus {
   beatsPerBar: number;
   syncStart: boolean;
   muted: string[];
+  /** Sections this style has; the panel dims the others. */
+  available: string[];
+  /** Style parts, for mute buttons. */
+  parts: { id: string; name: string; role: string }[];
 }
 
 export class ArrangerEngine {
@@ -176,15 +180,19 @@ export class ArrangerEngine {
     if (this.config.syncStart && !this.player.isRunning) this.player.start(now);
   }
 
-  /** Stop everything and silence all 16 channels. */
+  /**
+   * Reset sound ("panic"): stop the style, then on all 16 channels send sustain off, All Sound Off
+   * (cuts even ringing release tails), All Notes Off and Reset All Controllers - the standard set.
+   */
   panic(now: number): MidiEvent[] {
     const out = this.pending.splice(0);
     out.push(...this.player.stop(now));
+    for (const n of this.leftSounding) out.push({ t: now, data: [0x80 | (this.config.leftChannel - 1), n, 0] });
     this.leftHeld.clear();
     this.leftSounding.clear();
     this.chordDueAt = null;
     for (let ch = 0; ch < 16; ch++) {
-      out.push({ t: now, data: [0xb0 | ch, 64, 0] }, { t: now, data: [0xb0 | ch, 123, 0] }, { t: now, data: [0xb0 | ch, 121, 0] });
+      for (const [cc, v] of [[64, 0], [120, 0], [123, 0], [121, 0]] as const) out.push({ t: now, data: [0xb0 | ch, cc, v] });
     }
     return out;
   }
@@ -205,6 +213,8 @@ export class ArrangerEngine {
       beatsPerBar,
       syncStart: this.config.syncStart,
       muted: style.parts.filter((p) => this.player.isMuted(p.id)).map((p) => p.id),
+      available: Object.keys(style.sections),
+      parts: style.parts.map((p) => ({ id: p.id, name: p.name, role: p.role })),
     };
   }
 }

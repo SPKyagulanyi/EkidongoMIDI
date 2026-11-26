@@ -61,6 +61,7 @@ impl Ord for Timed {
 fn silence(out: &mut MidiOutputConnection) {
     for ch in 0..16u8 {
         let _ = out.send(&[0xB0 | ch, 64, 0]); // sustain off
+        let _ = out.send(&[0xB0 | ch, 120, 0]); // all sound off
         let _ = out.send(&[0xB0 | ch, 123, 0]); // all notes off
         let _ = out.send(&[0xB0 | ch, 121, 0]); // reset controllers
     }

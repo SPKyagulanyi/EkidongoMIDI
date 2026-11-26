@@ -7,37 +7,49 @@
     <link rel="stylesheet" href="/src/app.css" />
   </head>
   <body>
-    <div id="connect" class="screen">
-      <h1>EkidongoMIDI</h1>
-      <p class="muted">Connect your keyboard by USB, switch it on, then choose it below.</p>
-      <label>Keyboard (MIDI in) <select id="inPort"></select></label>
-      <label>Sound (MIDI out) <select id="outPort"></select></label>
-      <div class="row">
-        <button id="refresh" class="secondary">Refresh</button>
-        <button id="connectBtn" class="primary">Connect</button>
-      </div>
-      <p id="connectMsg" class="msg" role="status"></p>
-    </div>
-
-    <div id="perform" class="screen" hidden>
-      <header class="bar">
-        <div class="row">
-          <button id="prevStyle" class="icon" aria-label="Previous style">‹</button>
-          <div class="style">
-            <div id="styleName" class="title">—</div>
-            <div id="styleMeta" class="muted small">—</div>
-          </div>
-          <button id="nextStyle" class="icon" aria-label="Next style">›</button>
+    <!-- Page 1: Devices (connect the keyboard). Opened at first run or from the header. -->
+    <main id="devices" class="page devices" hidden>
+      <div class="devices-card">
+        <h1>Devices</h1>
+        <p class="muted">Connect your keyboard by USB and switch it on. EkidongoMIDI remembers your choice and connects by itself next time.</p>
+        <label>Keyboard (MIDI in) <select id="inPort"></select></label>
+        <label>Sound (MIDI out) <select id="outPort"></select></label>
+        <div class="row wrap">
+          <button id="refresh" class="secondary">Refresh list</button>
+          <button id="connectBtn" class="primary">Connect</button>
+          <button id="backBtn" class="secondary" hidden>Back to playing</button>
         </div>
-        <div class="row">
+        <p id="connectMsg" class="msg" role="status"></p>
+      </div>
+    </main>
+
+    <!-- Page 2: Performance -->
+    <main id="perform" class="page" hidden>
+      <header class="bar">
+        <button id="styleBtn" class="style-btn" aria-haspopup="dialog">
+          <span class="style-text">
+            <span id="styleName" class="title">—</span>
+            <span id="styleMeta" class="muted small">—</span>
+          </span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+        </button>
+
+        <div class="tempo-group" role="group" aria-label="Tempo">
           <button id="tempoDown" class="icon" aria-label="Slower">−</button>
-          <div class="tempo"><span id="tempo">—</span> <span class="muted small">BPM</span></div>
+          <label class="tempo-field">
+            <input id="tempoInput" type="number" min="20" max="300" step="1" inputmode="numeric" aria-label="Tempo in BPM" />
+            <span class="muted small">BPM</span>
+          </label>
           <button id="tempoUp" class="icon" aria-label="Faster">+</button>
+          <button id="tapBtn" class="tap">Tap</button>
           <div id="beats" class="beats" aria-hidden="true"></div>
         </div>
+
         <div class="row">
-          <span id="portName" class="pill">—</span>
-          <button id="panic" class="danger">Panic</button>
+          <button id="devicesBtn" class="pill" aria-label="Devices">
+            <span class="dot" aria-hidden="true"></span><span id="portName">—</span>
+          </button>
+          <button id="resetBtn" class="reset" title="Stops the band and silences every note (also: Esc, or press Stop twice)">Reset sound</button>
         </div>
       </header>
 
@@ -78,9 +90,20 @@
       </section>
 
       <footer class="muted small keys">
-        Keys: Space start/stop · A–D main · F fill · E ending · ←/→ style · ↑/↓ tempo · Esc panic
+        Keys: Space start/stop · A–D main · F fill · E ending · S styles · ↑/↓ tempo · Esc reset sound
       </footer>
+    </main>
+
+    <!-- Page 3: Style browser (Genos-style: category, then style) -->
+    <div id="browser" class="page browser" role="dialog" aria-modal="true" aria-labelledby="browserTitle" hidden>
+      <header class="bar">
+        <h1 id="browserTitle">Styles</h1>
+        <button id="browserClose" class="secondary">Close</button>
+      </header>
+      <nav id="categories" class="tabs" aria-label="Style categories"></nav>
+      <ul id="styleList" class="style-list"></ul>
     </div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
