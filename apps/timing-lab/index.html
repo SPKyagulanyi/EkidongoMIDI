@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EkidongoMIDI · Timing Lab</title>
+    <style>
+      :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+      body { max-width: 980px; margin: 24px auto; padding: 0 16px; line-height: 1.45; }
+      h1 { font-size: 22px; margin-bottom: 4px; }
+      p.lead { margin-top: 0; opacity: 0.8; }
+      fieldset { border: 1px solid #8884; border-radius: 8px; margin: 12px 0; padding: 12px 16px; }
+      legend { font-weight: 600; }
+      label { display: inline-flex; gap: 6px; align-items: center; margin: 4px 16px 4px 0; }
+      select, input { font: inherit; padding: 4px 6px; }
+      input[type='number'] { width: 80px; }
+      button { font: inherit; padding: 8px 14px; margin: 4px 8px 4px 0; border-radius: 6px; border: 1px solid #8886; cursor: pointer; }
+      button:disabled { opacity: 0.5; cursor: default; }
+      #status { font-weight: 600; min-height: 1.4em; }
+      table { border-collapse: collapse; width: 100%; font-size: 14px; margin-top: 8px; }
+      th, td { border-bottom: 1px solid #8884; padding: 6px 8px; text-align: right; }
+      th:first-child, td:first-child { text-align: left; }
+      .pass { color: #1a7f37; font-weight: 600; } .fail { color: #cf222e; font-weight: 600; }
+      code { background: #8882; padding: 1px 4px; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <h1>EkidongoMIDI · Timing Lab</h1>
+    <p class="lead">Plays clicks on the keyboard, records the keyboard's own audio over USB, and measures how evenly the clicks really landed. Target: jitter under 5 ms.</p>
+
+    <fieldset>
+      <legend>1. Connect</legend>
+      <button id="connect">Connect MIDI + audio</button>
+      <label>MIDI out <select id="midiOut"></select></label>
+      <label>Audio in <select id="audioIn"></select></label>
+    </fieldset>
+
+    <fieldset>
+      <legend>2. Test settings</legend>
+      <label>Clicks <input id="count" type="number" value="160" min="20" max="1000" /></label>
+      <label>Interval (ms) <input id="interval" type="number" value="125" min="40" max="1000" /></label>
+      <label>Lookahead (ms) <input id="lookahead" type="number" value="40" min="5" max="500" /></label>
+      <label><input id="stress" type="checkbox" /> Busy UI (block 30 ms every 100 ms)</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>3. Run</legend>
+      <button id="runTs" disabled>Browser: timestamped (planned design)</button>
+      <button id="runIm" disabled>Browser: immediate (naive)</button>
+      <button id="runNative" disabled>Record native test</button>
+      <label>for <input id="nativeSec" type="number" value="25" min="5" max="120" /> s</label>
+      <p>Native test: press <b>Record native test</b>, then within 3 s run <code>py tools/native-timing/native_click.py</code> in a terminal.</p>
+      <div id="status"></div>
+    </fieldset>
+
+    <table>
+      <thead>
+        <tr><th>Run</th><th>Heard / sent</th><th>Interval ms</th><th>Jitter SD ms</th><th>Jitter p95 ms</th><th>Max ms</th><th>JS late sends</th><th>Result</th></tr>
+      </thead>
+      <tbody id="results"></tbody>
+    </table>
+    <p><button id="download" disabled>Download results (JSON)</button></p>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

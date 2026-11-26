@@ -1,0 +1,9 @@
+EkidongoMIDI style library
+Copyright (c) 2026 the EkidongoMIDI author. All rights reserved.
+
+The style files in this folder (packages/styles) are NOT licensed under the GNU GPL that
+covers the rest of this repository. They may not be copied, redistributed, sold or used
+outside EkidongoMIDI without written permission from the copyright holder.
+
+Files with "status": "prototype" are unreviewed drafts and will be replaced by
+musician-recorded styles.

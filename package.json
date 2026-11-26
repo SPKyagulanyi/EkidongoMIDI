@@ -1,0 +1,31 @@
+{
+  "name": "ekidongomidi",
+  "private": true,
+  "version": "0.0.0",
+  "description": "EkidongoMIDI - an arranger (auto-accompaniment) app for MIDI keyboards",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "packageManager": "pnpm@12.23.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc -p tools && pnpm -r --if-present typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "pnpm -r --if-present build",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "lab": "pnpm --filter @ekidongo/timing-lab dev",
+    "convert:prototype": "node tools/convert-prototype-styles.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.11",
+    "eslint": "^10.15.0",
+    "globals": "^17.14.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.74.0",
+    "vitest": "^5.1.2"
+  }
+}

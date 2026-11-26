@@ -1,0 +1,14 @@
+packages:
+  - packages/*
+  - apps/*
+
+# Dependencies allowed to run install scripts (everything else is blocked).
+allowBuilds:
+  esbuild: true
+
+# Added by pnpm: versions newer than the minimum release age that we accept.
+minimumReleaseAgeExclude:
+  - '@types/node@26.6.11'
+  - '@vitest/mocker@5.1.2'
+  - '@vitest/spy@5.1.2'
+  - vitest@5.1.2

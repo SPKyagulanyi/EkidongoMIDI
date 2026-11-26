@@ -1,0 +1,17 @@
+{
+  "name": "@ekidongo/engine",
+  "version": "0.0.0",
+  "private": true,
+  "description": "EkidongoMIDI arranger engine: chord recognition, style model, playback (platform-free)",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "zod": "^4.1.0"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@ekidongo/styles",
+  "version": "0.0.0",
+  "private": true,
+  "description": "EkidongoMIDI style library (NOT covered by the GPL - see LICENSE in this folder)",
+  "license": "SEE LICENSE IN LICENSE",
+  "type": "module",
+  "dependencies": {
+    "@ekidongo/engine": "workspace:*"
+  }
+}

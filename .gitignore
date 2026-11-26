@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+*.log
+.env
+.env.*
+# Private Yamaha style files for importer tests: never commit (copyrighted)
+private-test-styles/
+# Timing measurement exports
+timing-results/*.json
+__pycache__/
