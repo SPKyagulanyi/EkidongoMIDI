@@ -5,6 +5,9 @@
   "description": "EkidongoMIDI style library (NOT covered by the GPL - see LICENSE in this folder)",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
   "dependencies": {
     "@ekidongo/engine": "workspace:*"
   }
