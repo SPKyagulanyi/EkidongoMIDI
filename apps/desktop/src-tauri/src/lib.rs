@@ -194,10 +194,54 @@ fn panic(state: State<'_, AppState>) -> Result<(), String> {
     Ok(())
 }
 
+/// Largest setup file we read or write (registrations and set lists are small JSON).
+const MAX_SETUP_FILE: u64 = 5 * 1024 * 1024;
+
+fn check_setup_path(path: &str) -> Result<std::path::PathBuf, String> {
+    let p = std::path::PathBuf::from(path);
+    match p.extension().and_then(|e| e.to_str()) {
+        Some(ext) if ext.eq_ignore_ascii_case("json") => Ok(p),
+        _ => Err("Setup files must end in .json".into()),
+    }
+}
+
+/// Write an exported setup file (path chosen by the user in a save dialog).
+#[tauri::command]
+fn write_setup_file(path: String, contents: String) -> Result<(), String> {
+    if contents.len() as u64 > MAX_SETUP_FILE {
+        return Err("Setup file too large".into());
+    }
+    std::fs::write(check_setup_path(&path)?, contents).map_err(|e| e.to_string())
+}
+
+/// Read a setup file to import (path chosen by the user in an open dialog).
+#[tauri::command]
+fn read_setup_file(path: String) -> Result<String, String> {
+    let p = check_setup_path(&path)?;
+    let size = std::fs::metadata(&p).map_err(|e| e.to_string())?.len();
+    if size > MAX_SETUP_FILE {
+        return Err("Setup file too large".into());
+    }
+    std::fs::read_to_string(p).map_err(|e| e.to_string())
+}
+
+/// Crash and error reporting for the Rust side (panics in any thread, including the MIDI
+/// scheduler). Off when the build has no DSN. No personal data is sent.
+fn init_error_reporting() -> Option<sentry::ClientInitGuard> {
+    let dsn = option_env!("EKIDONGO_SENTRY_DSN")?;
+    let mut options = sentry::ClientOptions::default();
+    options.release = sentry::release_name!();
+    options.environment = Some(if cfg!(debug_assertions) { "development" } else { "production" }.into());
+    options.send_default_pii = false;
+    Some(sentry::init((dsn, options)))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let _sentry = init_error_reporting();
     scheduler::raise_timer_resolution();
     let app = tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .manage(AppState::default())
         .invoke_handler(tauri::generate_handler![
             clock_now,
@@ -207,7 +251,9 @@ pub fn run() {
             connected_output,
             schedule,
             set_thru,
-            panic
+            panic,
+            write_setup_file,
+            read_setup_file
         ])
         .build(tauri::generate_context!())
         .expect("error while building EkidongoMIDI");

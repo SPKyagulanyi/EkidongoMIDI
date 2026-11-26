@@ -58,6 +58,52 @@ export function loadLibrary(storage: Pick<Storage, 'getItem'> = localStorage): L
   }
 }
 
+/** File format for exported setups (registrations + set lists). */
+export interface SetupFile {
+  format: 'ekidongo-setups';
+  version: 1;
+  exportedAt: string;
+  bank: (Registration | null)[];
+  setlists: Setlist[];
+}
+
+export function exportSetups(lib: Library, now = new Date()): string {
+  const file: SetupFile = { format: 'ekidongo-setups', version: 1, exportedAt: now.toISOString(), bank: lib.bank, setlists: lib.setlists };
+  return JSON.stringify(file, null, 2);
+}
+
+const isRegistration = (r: unknown): r is Registration =>
+  typeof r === 'object' && r !== null && typeof (r as Registration).styleId === 'string' &&
+  typeof (r as Registration).tempo === 'number' && typeof (r as Registration).voices === 'object';
+
+/**
+ * Import a setup file: registration buttons are replaced, set lists are added (a list with the same
+ * id replaces the old one). Throws a readable error for anything that isn't a valid setup file.
+ */
+export function importSetups(lib: Library, text: string): { buttons: number; lists: number } {
+  let data: Partial<SetupFile>;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error('This file is not a setup file (it is not valid JSON).');
+  }
+  if (data.format !== 'ekidongo-setups' || data.version !== 1) throw new Error('This file is not an EkidongoMIDI setup file.');
+  const bank = Array.from({ length: BANK_SIZE }, (_, i) => {
+    const r = data.bank?.[i];
+    return isRegistration(r) ? r : null;
+  });
+  const lists = (data.setlists ?? []).filter(
+    (l): l is Setlist => typeof l?.id === 'string' && typeof l.name === 'string' && Array.isArray(l.entries) && l.entries.every((e) => isRegistration(e?.reg)),
+  );
+  lib.bank = bank;
+  for (const l of lists) {
+    const i = lib.setlists.findIndex((x) => x.id === l.id);
+    if (i >= 0) lib.setlists[i] = l;
+    else lib.setlists.push(l);
+  }
+  return { buttons: bank.filter(Boolean).length, lists: lists.length };
+}
+
 export function saveLibrary(lib: Library, storage: Pick<Storage, 'setItem'> = localStorage): void {
   storage.setItem(KEY, JSON.stringify(lib));
 }

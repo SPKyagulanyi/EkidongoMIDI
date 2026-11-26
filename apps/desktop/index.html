@@ -47,6 +47,23 @@
           </label>
           <label class="check"><input id="syncStopSetting" type="checkbox" /> Synchro Stop: lifting your left hand stops the band</label>
         </section>
+        <section class="panel">
+          <h2>Your setups</h2>
+          <p class="muted small">Save your registration buttons and set lists to a file, for a backup or to use on another computer (for example the church keyboard).</p>
+          <div class="row wrap">
+            <button id="exportSetups" class="secondary">Export to a file…</button>
+            <button id="importSetups" class="secondary">Import from a file…</button>
+          </div>
+          <p class="muted small">Importing replaces your 8 registration buttons and adds the file's set lists.</p>
+          <p id="setupsMsg" class="msg" role="status"></p>
+        </section>
+        <section class="panel">
+          <h2>About</h2>
+          <p><b>EkidongoMIDI</b> <span id="appVersion" class="muted"></span></p>
+          <p class="muted small">Free software under the GNU GPL v3. The style library is not covered by the GPL.</p>
+          <p class="muted small">"Live Drums" styles use drum performances from the Groove MIDI Dataset by Google LLC, licensed under CC BY 4.0 (magenta.tensorflow.org/datasets/groove). Selected bars were cut and notes mapped to General MIDI.</p>
+          <p class="muted small">Error reports, if any, are sent without personal data so problems can be fixed.</p>
+        </section>
       </div>
     </main>
 

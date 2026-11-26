@@ -22,8 +22,8 @@ waits for JavaScript.
 ## Status
 
 - [x] M1 engine core
-- [ ] M2 desktop shell
-- [ ] M3 performance screen
+- [x] M2 desktop shell
+- [x] M3 performance screen
 - [ ] M4 registrations and setlists
 - [ ] M5 first reviewed styles
-- [ ] M6 release pipeline
+- [~] M6 release pipeline: installer, CI release job, desktop error reporting done; code signing and auto-update need decisions

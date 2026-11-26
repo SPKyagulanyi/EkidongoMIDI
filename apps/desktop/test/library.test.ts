@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ArrangerEngine, compileGridStyle } from '@ekidongo/engine';
-import { capture, emptyLibrary, loadLibrary, moveEntry, recallPlan, saveLibrary, step, type Library } from '../src/library.ts';
+import { capture, emptyLibrary, exportSetups, importSetups, loadLibrary, moveEntry, recallPlan, saveLibrary, step, type Library } from '../src/library.ts';
 
 const style = compileGridStyle({
   name: 'Lib Test',
@@ -64,6 +64,29 @@ describe('library storage and set lists', () => {
     expect(step(lib, 1)).toBeNull();
     expect(step(lib, -1)?.title).toBe('1');
     expect(step(lib, -1)).toBeNull();
+  });
+
+  it('exports and imports setups: buttons replaced, lists added or updated', () => {
+    const reg = capture('Song', new ArrangerEngine(style).status(0), 54);
+    const src = emptyLibrary();
+    src.bank[2] = reg;
+    src.setlists.push({ id: 'sun', name: 'Sunday', entries: [{ title: 'Song', reg }] });
+    const text = exportSetups(src, new Date('2026-11-26T00:00:00Z'));
+
+    const dest = emptyLibrary();
+    dest.bank[0] = reg;
+    dest.setlists.push({ id: 'old', name: 'Rehearsal', entries: [] }, { id: 'sun', name: 'Sunday (old)', entries: [] });
+    expect(importSetups(dest, text)).toEqual({ buttons: 1, lists: 1 });
+    expect(dest.bank[0]).toBeNull();
+    expect(dest.bank[2]?.name).toBe('Song');
+    expect(dest.setlists.map((l) => l.name)).toEqual(['Rehearsal', 'Sunday']);
+  });
+
+  it('rejects files that are not setup files, without changing anything', () => {
+    const dest = emptyLibrary();
+    expect(() => importSetups(dest, '{nope')).toThrow(/not valid JSON/);
+    expect(() => importSetups(dest, '{"format":"other"}')).toThrow(/not an EkidongoMIDI setup file/);
+    expect(dest).toEqual(emptyLibrary());
   });
 
   it('reorders entries', () => {

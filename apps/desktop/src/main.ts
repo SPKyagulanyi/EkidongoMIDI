@@ -2,9 +2,11 @@ import {
   ArrangerEngine, GM_GROUPS, gmName, noteName,
   type ChordMode, type EngineCommand, type EngineStatus, type MainId, type Style, type VoiceSlot,
 } from '@ekidongo/engine';
-import { connectPorts, listPorts, panicNow, pushThru, runEngine, rustNow, send, syncClock } from './bridge.ts';
+import { open as openDialog, save as saveDialog } from '@tauri-apps/plugin-dialog';
+import { connectPorts, listPorts, panicNow, pushThru, readSetupFile, runEngine, rustNow, send, syncClock, writeSetupFile } from './bridge.ts';
+import { appVersion, initObservability, reportError } from './observability.ts';
 import {
-  activeSetlist, BANK_SIZE, capture, loadLibrary, moveEntry, newId, recallPlan, saveLibrary, step,
+  activeSetlist, BANK_SIZE, capture, exportSetups, importSetups, loadLibrary, moveEntry, newId, recallPlan, saveLibrary, step,
   type Registration, type Setlist,
 } from './library.ts';
 import { loadStyles } from './styles.ts';
@@ -21,6 +23,8 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, props: Record<string,
   e.append(...kids);
   return e;
 }
+
+initObservability();
 
 const SAVED_PORTS = 'ekidongo.ports';
 const SAVED_STYLE = 'ekidongo.style';
@@ -85,6 +89,7 @@ async function refreshPorts(): Promise<{ inputs: string[]; outputs: string[] }> 
     if (connectedPort) msg.className = 'msg ok';
     return ports;
   } catch (e) {
+    reportError(e, { step: 'list-ports' });
     msg.textContent = `Could not list MIDI devices: ${String(e)}`;
     return { inputs: [], outputs: [] };
   }
@@ -119,6 +124,7 @@ async function connect(input: string, output: string) {
     $('portName').textContent = output;
     showPage('perform');
   } catch (e) {
+    reportError(e, { step: 'connect' });
     msg.textContent = String(e);
   }
 }
@@ -169,6 +175,38 @@ $('chordMode').addEventListener('change', (e) => applyConfig({ type: 'config', c
 splitSel.addEventListener('change', () => applyConfig({ type: 'config', config: { splitPoint: Number(splitSel.value) } }));
 $('fadeMs').addEventListener('change', (e) => applyConfig({ type: 'config', config: { fadeMs: Number((e.target as HTMLSelectElement).value) } }));
 $('syncStopSetting').addEventListener('change', (e) => applyConfig({ type: 'config', config: { syncStop: (e.target as HTMLInputElement).checked } }));
+
+// ---------- Settings: export / import setups, about ----------
+
+$('appVersion').textContent = `version ${appVersion}`;
+const setupsMsg = $('setupsMsg');
+$('exportSetups').addEventListener('click', async () => {
+  try {
+    const path = await saveDialog({ defaultPath: 'ekidongo-setups.json', filters: [{ name: 'EkidongoMIDI setups', extensions: ['json'] }] });
+    if (!path) return;
+    await writeSetupFile(path, exportSetups(lib));
+    setupsMsg.className = 'msg ok';
+    setupsMsg.textContent = `Saved to ${path}`;
+  } catch (e) {
+    reportError(e, { step: 'export-setups' });
+    setupsMsg.className = 'msg';
+    setupsMsg.textContent = `Could not save: ${String(e)}`;
+  }
+});
+$('importSetups').addEventListener('click', async () => {
+  try {
+    const path = await openDialog({ multiple: false, directory: false, filters: [{ name: 'EkidongoMIDI setups', extensions: ['json'] }] });
+    if (typeof path !== 'string') return;
+    const { buttons, lists } = importSetups(lib, await readSetupFile(path));
+    persist();
+    renderRegs();
+    setupsMsg.className = 'msg ok';
+    setupsMsg.textContent = `Imported ${buttons} registration${buttons === 1 ? '' : 's'} and ${lists} set list${lists === 1 ? '' : 's'}.`;
+  } catch (e) {
+    setupsMsg.className = 'msg';
+    setupsMsg.textContent = String(e instanceof Error ? e.message : e);
+  }
+});
 
 // ---------- Engine ----------
 

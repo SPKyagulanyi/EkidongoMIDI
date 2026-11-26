@@ -18,6 +18,8 @@ export const listPorts = () => invoke<Ports>('list_ports');
 export const connectPorts = (input: string, output: string) => invoke<void>('connect', { input, output });
 export const disconnectPorts = () => invoke<void>('disconnect');
 export const panicNow = () => invoke<void>('panic');
+export const writeSetupFile = (path: string, contents: string) => invoke<void>('write_setup_file', { path, contents });
+export const readSetupFile = (path: string) => invoke<string>('read_setup_file', { path });
 
 let offset = 0;
 
