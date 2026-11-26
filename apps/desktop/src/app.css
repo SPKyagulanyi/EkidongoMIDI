@@ -82,3 +82,58 @@ button.start.running { background: var(--surface2); color: var(--text); }
 .style-list button { width: 100%; min-height: 72px; text-align: left; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 10px 16px; }
 .style-list button .name { font-size: 18px; font-weight: 700; }
 .style-list button.current { border-color: var(--accent); background: #2a2112; }
+
+/* ---- Sub-pages (settings, mixer, voices, set lists) ---- */
+h2 { margin: 0 0 4px; font-size: 18px; }
+.panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; align-items: start; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+.panel label { display: flex; flex-direction: column; gap: 6px; }
+.panel label.check { flex-direction: row; align-items: center; gap: 10px; }
+.check input { width: 22px; height: 22px; }
+input[type='text'] { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-height: 44px; }
+.grow { flex: 1 1 200px; }
+
+/* Set-list strip */
+.strip { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 8px 12px; }
+.strip-text { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.song { font-size: 20px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.transport button { height: 80px; font-size: 18px; font-weight: 700; }
+
+/* Dock: voices + registrations */
+.dock { display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch; }
+.voices, .regs { display: flex; gap: 8px; align-items: stretch; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 8px; }
+.voices { flex: 1 1 360px; }
+.regs { flex: 2 1 480px; }
+.voice-btn { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; min-height: 60px; min-width: 0; text-align: left; }
+.vname { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.reg-grid { flex: 1; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+.reg-grid button { padding: 4px; min-height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; line-height: 1.2; overflow: hidden; }
+.reg-grid button b { font-size: 18px; }
+.reg-grid button.filled { border-color: #5a5f6b; }
+.reg-grid button.saving { border: 2px dashed var(--accent); }
+#saveReg[aria-pressed='true'] { background: var(--accent); color: #111; border-color: var(--accent); }
+
+/* Mixer */
+.mixer { display: flex; flex-direction: column; gap: 8px; max-width: 900px; }
+.mix-row { display: grid; grid-template-columns: minmax(140px, 1fr) 96px minmax(160px, 3fr) 48px; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 14px; }
+.mix-row input[type='range'] { width: 100%; accent-color: var(--accent); height: 32px; }
+.mix-row .val { text-align: right; font-variant-numeric: tabular-nums; }
+.mix-row button[aria-pressed='true'] { background: #3a1d20; border-color: #8a2f36; color: #ffb3b3; }
+
+/* Voice picker */
+.pick-list { list-style: none; margin: 0; padding: 0 4px 24px 0; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; align-content: start; }
+.pick-list button { width: 100%; text-align: left; }
+.pick-list button.current { border-color: var(--accent); background: #2a2112; }
+
+/* Set lists */
+.lists-layout { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(360px, 2fr); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .lists-layout { grid-template-columns: 1fr; } }
+.plain { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.plain button { width: 100%; text-align: left; }
+.plain button.current { border-color: var(--accent); }
+.entries { margin: 0; padding: 0 0 0 28px; display: flex; flex-direction: column; gap: 6px; }
+.entries li { display: flex; align-items: center; gap: 6px; }
+.entries .etitle { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.entries .etitle span:first-child { font-weight: 700; }
+.entries button { min-height: 40px; padding: 0 10px; }

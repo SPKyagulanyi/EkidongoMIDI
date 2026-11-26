@@ -7,23 +7,50 @@
     <link rel="stylesheet" href="/src/app.css" />
   </head>
   <body>
-    <!-- Page 1: Devices (connect the keyboard). Opened at first run or from the header. -->
-    <main id="devices" class="page devices" hidden>
-      <div class="devices-card">
-        <h1>Devices</h1>
-        <p class="muted">Connect your keyboard by USB and switch it on. EkidongoMIDI remembers your choice and connects by itself next time.</p>
-        <label>Keyboard (MIDI in) <select id="inPort"></select></label>
-        <label>Sound (MIDI out) <select id="outPort"></select></label>
-        <div class="row wrap">
-          <button id="refresh" class="secondary">Refresh list</button>
-          <button id="connectBtn" class="primary">Connect</button>
-          <button id="backBtn" class="secondary" hidden>Back to playing</button>
-        </div>
-        <p id="connectMsg" class="msg" role="status"></p>
+    <!-- Settings: devices and playing options -->
+    <main id="settings" class="page sub" hidden>
+      <header class="bar">
+        <h1>Settings</h1>
+        <button class="secondary back" data-back>Back to playing</button>
+      </header>
+      <div class="panels">
+        <section class="panel">
+          <h2>Devices</h2>
+          <p class="muted small">Connect your keyboard by USB and switch it on. EkidongoMIDI remembers your choice and connects by itself next time.</p>
+          <label>Keyboard (MIDI in) <select id="inPort"></select></label>
+          <label>Sound (MIDI out) <select id="outPort"></select></label>
+          <div class="row wrap">
+            <button id="refresh" class="secondary">Refresh list</button>
+            <button id="connectBtn" class="primary">Connect</button>
+          </div>
+          <p id="connectMsg" class="msg" role="status"></p>
+        </section>
+        <section class="panel">
+          <h2>Playing</h2>
+          <label>Chord detection
+            <select id="chordMode">
+              <option value="fingered">Fingered: play full chords</option>
+              <option value="multi">Multi Finger: full chords, or one-finger shortcuts</option>
+              <option value="single">Single Finger: one key = major, add a key to its left for minor / 7th</option>
+            </select>
+          </label>
+          <label>Split point: chords are played below
+            <select id="splitPoint"></select>
+          </label>
+          <label>Fade In / Fade Out length
+            <select id="fadeMs">
+              <option value="2000">2 seconds</option>
+              <option value="4000">4 seconds</option>
+              <option value="6000">6 seconds</option>
+              <option value="8000">8 seconds</option>
+            </select>
+          </label>
+          <label class="check"><input id="syncStopSetting" type="checkbox" /> Synchro Stop: lifting your left hand stops the band</label>
+        </section>
       </div>
     </main>
 
-    <!-- Page 2: Performance -->
+    <!-- Performance -->
     <main id="perform" class="page" hidden>
       <header class="bar">
         <button id="styleBtn" class="style-btn" aria-haspopup="dialog">
@@ -45,19 +72,27 @@
           <div id="beats" class="beats" aria-hidden="true"></div>
         </div>
 
-        <div class="row">
-          <button id="devicesBtn" class="pill" aria-label="Devices">
-            <span class="dot" aria-hidden="true"></span><span id="portName">—</span>
+        <div class="row wrap">
+          <button id="mixerBtn" class="secondary">Mixer</button>
+          <button id="listsBtn" class="secondary">Set lists</button>
+          <button id="settingsBtn" class="pill" aria-label="Settings">
+            <span class="dot" aria-hidden="true"></span><span id="portName">Settings</span>
           </button>
           <button id="resetBtn" class="reset" title="Stops the band and silences every note (also: Esc, or press Stop twice)">Reset sound</button>
         </div>
       </header>
 
+      <div id="setlistStrip" class="strip" hidden>
+        <button id="prevSong" class="secondary">‹ Previous</button>
+        <div class="strip-text"><span id="setlistName" class="muted small">—</span><span id="songTitle" class="song">—</span></div>
+        <button id="nextSong" class="primary">Next song ›</button>
+      </div>
+
       <section class="info">
         <div class="card chord">
           <div class="label">Chord</div>
           <div id="chord" class="big">—</div>
-          <div class="muted small">Left hand below <span id="splitName">F#3</span></div>
+          <div class="muted small"><span id="modeName">Fingered</span> · left hand below <span id="splitName">F#3</span></div>
         </div>
         <div class="card now">
           <div id="nowLabel" class="label">Stopped</div>
@@ -81,20 +116,87 @@
           <button data-cmd="main" data-id="mainC">Main C</button>
           <button data-cmd="main" data-id="mainD">Main D</button>
         </div>
-        <div class="grid4">
+        <div class="grid6 transport">
           <button data-cmd="fill">Fill</button>
           <button data-cmd="break">Break</button>
+          <button id="fadeBtn">Fade In</button>
+          <button id="syncStop" aria-pressed="false">Sync Stop</button>
           <button id="sync" aria-pressed="true">Sync Start</button>
           <button id="startStop" class="start">Start</button>
         </div>
       </section>
 
+      <section class="dock">
+        <div class="voices" role="group" aria-label="Voices">
+          <button id="rightVoice" class="voice-btn"><span class="muted small">Right voice</span><span id="rightName" class="vname">—</span></button>
+          <button id="layerToggle" class="voice-btn" aria-pressed="false"><span id="layerState" class="muted small">Layer · off</span><span id="layerName" class="vname">—</span></button>
+          <button id="layerChange" class="icon" aria-label="Change layer voice">›</button>
+        </div>
+        <div class="regs" role="group" aria-label="Registrations">
+          <div id="regButtons" class="reg-grid"></div>
+          <button id="saveReg" aria-pressed="false">Save</button>
+          <button id="freeze" aria-pressed="false">Freeze</button>
+        </div>
+      </section>
+
       <footer class="muted small keys">
-        Keys: Space start/stop · A–D main · F fill · E ending · S styles · ↑/↓ tempo · Esc reset sound
+        Keys: Space start/stop · A–D main · F fill · E ending · S styles · 1–8 registrations · PgUp/PgDn songs · ↑/↓ tempo · Esc reset
       </footer>
     </main>
 
-    <!-- Page 3: Style browser (Genos-style: category, then style) -->
+    <!-- Mixer -->
+    <main id="mixer" class="page sub" hidden>
+      <header class="bar">
+        <h1>Mixer</h1>
+        <button class="secondary back" data-back>Back to playing</button>
+      </header>
+      <p class="muted small">Volumes are saved with registrations. Muted parts stay silent until you unmute them.</p>
+      <div id="mixerRows" class="mixer"></div>
+    </main>
+
+    <!-- Voice picker -->
+    <main id="voices" class="page sub" hidden>
+      <header class="bar">
+        <h1 id="voicesTitle">Right voice</h1>
+        <button class="secondary back" data-back>Done</button>
+      </header>
+      <p class="muted small">Tap a voice and play: it changes straight away.</p>
+      <nav id="voiceGroups" class="tabs" aria-label="Voice groups"></nav>
+      <ul id="voiceList" class="pick-list"></ul>
+    </main>
+
+    <!-- Set lists -->
+    <main id="lists" class="page sub" hidden>
+      <header class="bar">
+        <h1>Set lists</h1>
+        <button class="secondary back" data-back>Back to playing</button>
+      </header>
+      <div class="lists-layout">
+        <section class="panel">
+          <h2>Your lists</h2>
+          <ul id="listNames" class="plain"></ul>
+          <div class="row wrap">
+            <input id="newListName" type="text" placeholder="New list name, e.g. Sunday service" aria-label="New list name" />
+            <button id="newList" class="secondary">Create</button>
+          </div>
+        </section>
+        <section id="listDetail" class="panel" hidden>
+          <div class="row wrap">
+            <input id="listName" type="text" aria-label="List name" class="grow" />
+            <button id="useList" class="primary">Use on stage</button>
+            <button id="deleteList" class="secondary">Delete list</button>
+          </div>
+          <ol id="entries" class="entries"></ol>
+          <div class="row wrap">
+            <input id="entryTitle" type="text" placeholder="Song title" aria-label="Song title" class="grow" />
+            <button id="addEntry" class="secondary">Add current setup as a song</button>
+          </div>
+          <p class="muted small">A song remembers the style, tempo, section, voices, mixer and settings you have right now.</p>
+        </section>
+      </div>
+    </main>
+
+    <!-- Style browser (Genos-style: category, then style) -->
     <div id="browser" class="page browser" role="dialog" aria-modal="true" aria-labelledby="browserTitle" hidden>
       <header class="bar">
         <h1 id="browserTitle">Styles</h1>
