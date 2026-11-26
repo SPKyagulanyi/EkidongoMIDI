@@ -10,7 +10,8 @@ if (-not (Test-Path $key) -or -not (Test-Path $pass)) {
 }
 $env:TAURI_SIGNING_PRIVATE_KEY = Get-Content $key -Raw
 $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = (Get-Content $pass -Raw).Trim()
-$env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
+$cargoHome = if ($env:CARGO_HOME) { $env:CARGO_HOME } else { Join-Path $env:USERPROFILE '.cargo' }
+$env:PATH = "$cargoHome\bin;$env:PATH"
 Push-Location (Join-Path $PSScriptRoot '..\apps\desktop')
 try {
   pnpm tauri build

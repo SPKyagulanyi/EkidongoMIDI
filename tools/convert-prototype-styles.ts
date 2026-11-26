@@ -3,7 +3,7 @@
  * in packages/styles/prototype. Usage:
  *   npm run convert:prototype -- [path/to/styles.json]
  */
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { compileGridStyle, deriveMissingSections, validateStyle, type GridStyle } from '../packages/engine/src/index.ts';
@@ -21,7 +21,9 @@ const CATEGORY: Record<string, string> = {
 };
 const slug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-const src = process.argv[2] ?? join(homedir(), 'Documents', 'PianoArranger', 'styles.json');
+// Default: the prototype folder next to this repo (e.g. D:\projects\PianoArranger), else Documents.
+const sibling = join(import.meta.dirname, '..', '..', 'PianoArranger', 'styles.json');
+const src = process.argv[2] ?? (existsSync(sibling) ? sibling : join(homedir(), 'Documents', 'PianoArranger', 'styles.json'));
 const outDir = join(import.meta.dirname, '..', 'packages', 'styles', 'prototype');
 mkdirSync(outDir, { recursive: true });
 
