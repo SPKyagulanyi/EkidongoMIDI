@@ -4,7 +4,13 @@ Thanks for helping build EkidongoMIDI.
 
 ## Before your first pull request
 
-EkidongoMIDI is open core: the code is GPL-3.0, and the project also sells style packs and premium features. To keep that possible, every contributor agrees to a **contributor licence agreement (CLA)** that lets the project relicense contributions. The CLA text will be published before the repository accepts outside contributions; until then, outside pull requests can't be merged.
+EkidongoMIDI is open core: the code is GPL-3.0, and the project may also sell style packs and premium features. To keep that possible, every contributor signs the [contributor licence agreement](CLA.md) (CLA), which lets the project relicense contributions while you keep your copyright.
+
+To sign, post this comment on your first pull request:
+
+> I have read the CLA and I agree to its terms.
+
+The **CLA** check on your pull request turns green once you have signed; you only sign once. Pull requests without a signature can't be merged.
 
 ## Workflow
 

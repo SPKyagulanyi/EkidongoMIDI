@@ -1,0 +1,91 @@
+name: CLA
+
+# Checks that every pull request author has signed CLA.md. Signing = posting the exact sentence
+# below as a comment on a pull request. Signatures are stored on the `cla-signatures` branch.
+#
+# Security: this workflow never checks out or runs code from the pull request; it only reads the
+# pull request's author and comments through the GitHub API.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  statuses: write
+
+jobs:
+  cla:
+    if: github.event_name == 'pull_request_target' || github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v9
+        with:
+          script: |
+            const PHRASE = 'I have read the CLA and I agree to its terms.';
+            const BRANCH = 'cla-signatures';
+            const FILE = 'signatures.json';
+            const { owner, repo } = context.repo;
+            const number = context.payload.pull_request?.number ?? context.payload.issue.number;
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: number });
+            const author = pr.user;
+
+            // The maintainer and bots don't sign.
+            if (author.login === owner || author.type === 'Bot') {
+              core.info(`${author.login} does not need to sign.`);
+              return;
+            }
+
+            // Load signatures (create the branch the first time).
+            let signatures = [];
+            let sha;
+            try {
+              const { data } = await github.rest.repos.getContent({ owner, repo, path: FILE, ref: BRANCH });
+              signatures = JSON.parse(Buffer.from(data.content, 'base64').toString('utf8'));
+              sha = data.sha;
+            } catch (e) {
+              if (e.status !== 404) throw e;
+              const { data: main } = await github.rest.git.getRef({ owner, repo, ref: `heads/${pr.base.repo.default_branch}` });
+              try {
+                await github.rest.git.createRef({ owner, repo, ref: `refs/heads/${BRANCH}`, sha: main.object.sha });
+              } catch (err) {
+                if (err.status !== 422) throw err; // branch exists, file doesn't yet
+              }
+            }
+
+            let signed = signatures.some((s) => s.id === author.id);
+            if (!signed) {
+              const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number: number });
+              const signing = comments.find((c) => c.user.id === author.id && c.body.trim() === PHRASE);
+              if (signing) {
+                signatures.push({ login: author.login, id: author.id, date: signing.created_at, pr: number, comment: signing.html_url });
+                await github.rest.repos.createOrUpdateFileContents({
+                  owner, repo, path: FILE, branch: BRANCH, sha,
+                  message: `CLA signed by @${author.login} in #${number}`,
+                  content: Buffer.from(JSON.stringify(signatures, null, 2) + '\n').toString('base64'),
+                });
+                signed = true;
+              }
+            }
+
+            const state = signed ? 'success' : 'failure';
+            await github.rest.repos.createCommitStatus({
+              owner, repo, sha: pr.head.sha, state, context: 'CLA',
+              description: signed ? 'Contributor licence agreement signed' : 'Please sign the contributor licence agreement',
+              target_url: `https://github.com/${owner}/${repo}/blob/${pr.base.repo.default_branch}/CLA.md`,
+            });
+
+            if (!signed) {
+              const marker = '<!-- cla-check -->';
+              const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number: number });
+              if (!comments.some((c) => c.body.includes(marker))) {
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: number,
+                  body: `${marker}\nThanks for contributing! Before this can be merged, please read the [contributor licence agreement](https://github.com/${owner}/${repo}/blob/${pr.base.repo.default_branch}/CLA.md) and sign it by posting this comment exactly:\n\n> ${PHRASE}\n\nYou only need to sign once.`,
+                });
+              }
+              core.setFailed(`${author.login} has not signed the CLA yet.`);
+            }
