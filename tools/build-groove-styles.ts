@@ -15,6 +15,7 @@ import {
   barTicks, deriveMissingSections, parseSmf, smfBpm, validateStyle,
   type NoteEvent, type Section, type SectionId, type Style,
 } from '../packages/engine/src/index.ts';
+import { mixPass } from './style-mix.ts';
 
 const repo = join(import.meta.dirname, '..');
 const gmdRoot = join(repo, 'third_party', 'groove', 'groove');
@@ -151,7 +152,7 @@ for (const p of PLAN) {
     }
     if (proto.sections.ending1) sections.ending1 = proto.sections.ending1; // keep the band's ending
 
-    const style: Style = deriveMissingSections({
+    const style: Style = deriveMissingSections(mixPass({
       ...proto,
       id: `${p.target}-live`,
       name: `${proto.name} · Live Drums`,
@@ -164,7 +165,11 @@ for (const p of PLAN) {
       ],
       license: 'Drums: Groove MIDI Dataset by Google LLC, CC BY 4.0 (bars selected, notes mapped to GM). Other parts: all rights reserved.',
       sections,
-    });
+    }, {
+      // The drummer's performance keeps its own feel and dynamics; the programmed band parts get the mix pass.
+      humanizeParts: () => false, // band parts come from the prototypes, already humanized once
+      keepVelocity: (p) => p.role === 'drums',
+    }));
     const r = validateStyle(style);
     if (!r.ok) throw new Error(r.errors.join('; '));
     writeFileSync(join(outDir, `${style.id}.json`), JSON.stringify(r.style, null, 1) + '\n');

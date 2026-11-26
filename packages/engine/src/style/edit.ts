@@ -152,6 +152,36 @@ export function quantize(events: NoteEvent[], grid: number, strength = 1): NoteE
   });
 }
 
+/**
+ * Small, repeatable human variation for programmed parts: velocities vary by up to ±`velocity` and
+ * start times by up to ±`timing` ticks. The same seed always gives the same result. Never apply it
+ * to performances that were played by people (they already have their feel).
+ */
+export function humanize(events: NoteEvent[], o: { velocity?: number; timing?: number; seed?: number } = {}): NoteEvent[] {
+  let s = (o.seed ?? 1) >>> 0 || 1;
+  const rand = () => {
+    s ^= s << 13; s >>>= 0;
+    s ^= s >>> 17;
+    s ^= s << 5; s >>>= 0;
+    return s / 0xffffffff * 2 - 1; // -1..1
+  };
+  const dv = o.velocity ?? 8;
+  const dt = o.timing ?? 6;
+  return events.map((e) => {
+    const v = Math.max(1, Math.min(127, Math.round(e.v + rand() * dv)));
+    const t = e.t === 0 ? 0 : Math.max(0, Math.round(e.t + rand() * dt)); // keep beat 1 exactly on the bar
+    return { ...e, t, v };
+  });
+}
+
+/** Scale velocities so their average becomes `target`, keeping the accents' shape. */
+export function setAverageVelocity(events: NoteEvent[], target: number): NoteEvent[] {
+  if (!events.length) return [];
+  const avg = events.reduce((a, e) => a + e.v, 0) / events.length;
+  const k = target / avg;
+  return events.map((e) => ({ ...e, v: Math.max(1, Math.min(127, Math.round(e.v * k))) }));
+}
+
 /** Notes of one MIDI channel from an imported file, as a phrase starting at `fromBar`. */
 export function phraseFromMidi(
   notes: { tick: number; duration: number; channel: number; note: number; velocity: number }[],

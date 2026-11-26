@@ -7,6 +7,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { compileGridStyle, deriveMissingSections, validateStyle, type GridStyle } from '../packages/engine/src/index.ts';
+import { mixPass } from './style-mix.ts';
 
 /** Browser categories (Genos-style: pick a category, then a style). */
 const CATEGORY: Record<string, string> = {
@@ -27,7 +28,9 @@ mkdirSync(outDir, { recursive: true });
 const grids = (JSON.parse(readFileSync(src, 'utf8')) as { styles: GridStyle[] }).styles;
 let failed = 0;
 for (const grid of grids) {
-  const style = deriveMissingSections(compileGridStyle(grid, CATEGORY[slug(grid.name)] ?? 'Other'));
+  // Programmed (grid) styles: every part gets the professional balance and subtle human variation.
+  const compiled = compileGridStyle(grid, CATEGORY[slug(grid.name)] ?? 'Other');
+  const style = deriveMissingSections(mixPass(compiled, { humanizeParts: () => true, keepVelocity: () => false }));
   const r = validateStyle(style);
   if (!r.ok) {
     failed++;
