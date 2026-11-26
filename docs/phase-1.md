@@ -24,6 +24,6 @@ waits for JavaScript.
 - [x] M1 engine core
 - [x] M2 desktop shell
 - [x] M3 performance screen
-- [ ] M4 registrations and setlists
+- [x] M4 registrations and set lists (incl. export/import)
 - [ ] M5 first reviewed styles
 - [~] M6 release pipeline: installer, CI release job, desktop error reporting done; code signing and auto-update need decisions
