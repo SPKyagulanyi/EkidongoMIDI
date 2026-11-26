@@ -14,7 +14,7 @@ Gate to Phase 1: **timing targets met** (jitter p95 < 5 ms, no missed notes) on 
 - [ ] Rust + MSVC Build Tools installed; Tauri "hello MIDI" spike plays a click
 - [ ] Error reporting (Sentry): needs an account and DSN from the owner
 - [ ] UI wireframes for the performance screen
-- [ ] GitHub repository created and CI green
+- [x] GitHub repository created (private) and CI green
 
 ## Timing method
 
