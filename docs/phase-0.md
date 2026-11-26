@@ -11,7 +11,8 @@ Gate to Phase 1: **timing targets met** (jitter p95 < 5 ms, no missed notes) on 
 - [x] Timing Lab (Web MIDI, end-to-end audio measurement) + native WinMM baseline
 - [x] Timing measurements on the FP-30X (results below)
 - [x] Decision: desktop (Tauri + native MIDI) moves into Phase 1 on Windows
-- [ ] Rust + MSVC Build Tools installed; Tauri "hello MIDI" spike plays a click
+- [x] Rust + MSVC Build Tools installed; Rust (midir) click spike plays on the FP-30X
+- [ ] Audio-measured timing of the Rust spike in the Timing Lab
 - [ ] Error reporting (Sentry): needs an account and DSN from the owner
 - [ ] UI wireframes for the performance screen
 - [x] GitHub repository created (private) and CI green

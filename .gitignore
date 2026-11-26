@@ -9,3 +9,5 @@ private-test-styles/
 # Timing measurement exports
 timing-results/*.json
 __pycache__/
+# Rust build output
+target/
