@@ -12,5 +12,8 @@
   },
   "devDependencies": {
     "vite": "^7.0.0"
+  },
+  "dependencies": {
+    "@sentry/browser": "^11.17.0"
   }
 }

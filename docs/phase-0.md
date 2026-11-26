@@ -12,9 +12,9 @@ Gate to Phase 1: **timing targets met** (jitter p95 < 5 ms, no missed notes) on 
 - [x] Timing measurements on the FP-30X (results below)
 - [x] Decision: desktop (Tauri + native MIDI) moves into Phase 1 on Windows
 - [x] Rust + MSVC Build Tools installed; Rust (midir) click spike plays on the FP-30X
-- [ ] Audio-measured timing of the Rust spike in the Timing Lab
-- [ ] Error reporting (Sentry): needs an account and DSN from the owner
-- [ ] UI wireframes for the performance screen
+- [x] Audio-measured timing of the Rust spike: 160/160, SD 0.05 ms, p95 0.09 ms (pass)
+- [x] Error reporting: Sentry project ekidongomidi-web, Timing Lab reporting verified (EKIDONGOMIDI-WEB-1)
+- [x] UI wireframes: performance screen, setlist, setup (https://claude.ai/artifact/286zkX1w9EW6VUHS8uE13K)
 - [x] GitHub repository created (private) and CI green
 
 ## Timing method
@@ -35,6 +35,7 @@ Runs:
 | Browser timestamped, 40 ms lookahead | 114 / 160 | 5.94 | 13.57 | 18.29 | No: 0.9 s timer stall, 54 late sends |
 | Browser timestamped + busy UI | 160 / 160 | 4.82 | 8.58 | 9.96 | No: all sends on time, jitter added in delivery |
 | Native WinMM (Python) | 123 / 160* | 0.19 | 0.32 | 1.56 | Timing yes |
+| Native Rust (midir) | 160 / 160 | 0.05 | 0.09 | 0.15 | Yes |
 
 \* The 25 s recording ended before the native script finished; the missing clicks are outside the recording, not dropped.
 

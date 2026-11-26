@@ -1,8 +1,11 @@
+import { initObservability, reportError } from './observability.ts';
 import { analyzeOnsets, detectOnsets, type TimingStats } from './onsets.ts';
 import { listAudioInputs, startRecording } from './recorder.ts';
 import { runClicks, summarizeSends, type ClickPlan, type SendMode, type SendSummary } from './scheduler.ts';
 
 const JITTER_TARGET_MS = 5;
+
+initObservability();
 
 interface RunResult {
   label: string;
@@ -60,7 +63,7 @@ el('connect').addEventListener('click', async () => {
     status(`Connected. ${midi.outputs.size} MIDI output(s), ${inputs.length} audio input(s).`);
   } catch (e) {
     status(`Connect failed: ${(e as Error).message}`);
-    console.error(e);
+    reportError(e, { step: 'connect' });
   }
 });
 
@@ -124,7 +127,7 @@ async function browserRun(mode: SendMode) {
     status('Done.');
   } catch (e) {
     status(`Run failed: ${(e as Error).message}`);
-    console.error(e);
+    reportError(e, { step: 'browser-run', mode, stress, lookahead });
   } finally {
     runButtons.forEach((b) => (b.disabled = false));
   }
@@ -159,7 +162,7 @@ async function nativeRun() {
     status('Done.');
   } catch (e) {
     status(`Recording failed: ${(e as Error).message}`);
-    console.error(e);
+    reportError(e, { step: 'native-recording' });
   } finally {
     runButtons.forEach((b) => (b.disabled = false));
   }
