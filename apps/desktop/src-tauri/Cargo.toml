@@ -1,6 +1,6 @@
 [package]
 name = "ekidongomidi-desktop"
-version = "0.1.0"
+version = "0.1.1"
 description = "EkidongoMIDI desktop app (Tauri shell with native MIDI delivery)"
 license = "GPL-3.0-or-later"
 edition = "2021"

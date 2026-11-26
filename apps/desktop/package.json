@@ -1,6 +1,6 @@
 {
   "name": "@ekidongo/desktop",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "EkidongoMIDI desktop app (Tauri 2)",
   "license": "GPL-3.0-or-later",
