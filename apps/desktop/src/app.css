@@ -139,3 +139,10 @@ input[type='text'] { font: inherit; color: var(--text); background: var(--bg); b
 .entries button { min-height: 40px; padding: 0 10px; }
 .reg-grid button.clearing { border: 2px dashed #e5534b; }
 #clearReg[aria-pressed='true'] { background: #3a1d20; border-color: #e5534b; color: #ffb3b3; }
+
+/* Recorder */
+.hint { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); line-height: 1.45; }
+button.record { background: #d1242f; border-color: #d1242f; color: #fff; font-weight: 800; min-width: 140px; }
+button.record.recording { background: #fff; color: #d1242f; }
+.rec-status { margin: 0; font-size: 20px; font-weight: 700; min-height: 1.4em; }
+details summary { cursor: pointer; color: var(--muted); }

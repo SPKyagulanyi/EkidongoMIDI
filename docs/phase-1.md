@@ -25,5 +25,5 @@ waits for JavaScript.
 - [x] M2 desktop shell
 - [x] M3 performance screen
 - [x] M4 registrations and set lists (incl. export/import)
-- [ ] M5 first reviewed styles
+- [~] M5 first reviewed styles: recorder + MIDI import built; owner recording and review pending
 - [~] M6 release pipeline: signed installer, CI releases, auto-update, desktop error reporting done; installer code signing (certificate) pending

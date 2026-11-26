@@ -3,7 +3,8 @@ import {
   type ChordMode, type EngineCommand, type EngineStatus, type MainId, type Style, type VoiceSlot,
 } from '@ekidongo/engine';
 import { open as openDialog, save as saveDialog } from '@tauri-apps/plugin-dialog';
-import { connectPorts, disconnectPorts, listPorts, panicNow, pushThru, readSetupFile, runEngine, rustNow, send, syncClock, writeSetupFile } from './bridge.ts';
+import { connectPorts, disconnectPorts, listPorts, listUserStyles, panicNow, pushThru, readSetupFile, runEngine, rustNow, send, syncClock, writeSetupFile } from './bridge.ts';
+import { createRecorder } from './recorder.ts';
 import { appVersion, initObservability, reportError } from './observability.ts';
 import { checkForUpdate, hasUpdate, installUpdate } from './updates.ts';
 import {
@@ -11,6 +12,7 @@ import {
   type Registration, type Setlist,
 } from './library.ts';
 import { loadStyles } from './styles.ts';
+import { validateStyle } from '@ekidongo/engine';
 
 const $ = <T extends HTMLElement>(id: string): T => {
   const e = document.getElementById(id);
@@ -30,7 +32,7 @@ initObservability();
 const SAVED_PORTS = 'ekidongo.ports';
 const SAVED_STYLE = 'ekidongo.style';
 const SAVED_SETTINGS = 'ekidongo.settings';
-const CATEGORY_ORDER = ['African', 'East African', 'Church', 'Caribbean', 'Latin', 'Pop & RnB', 'Ballroom & March'];
+const CATEGORY_ORDER = ['My styles', 'African', 'East African', 'Church', 'Caribbean', 'Latin', 'Pop & RnB', 'Ballroom & March'];
 const MODE_NAMES: Record<ChordMode, string> = { fingered: 'Fingered', multi: 'Multi Finger', single: 'Single Finger' };
 
 const { styles, errors } = loadStyles();
@@ -58,9 +60,10 @@ function persist() {
 
 // ---------- Pages ----------
 
-type Page = 'settings' | 'perform' | 'mixer' | 'voices' | 'lists';
-const PAGES: Page[] = ['settings', 'perform', 'mixer', 'voices', 'lists'];
+type Page = 'settings' | 'perform' | 'mixer' | 'voices' | 'lists' | 'recorder';
+const PAGES: Page[] = ['settings', 'perform', 'mixer', 'voices', 'lists', 'recorder'];
 function showPage(p: Page) {
+  if (!$('recorder').hidden && p !== 'recorder') recorder.close();
   for (const id of PAGES) $(id).hidden = id !== p;
   if (p === 'mixer') renderMixer();
   if (p === 'lists') renderLists();
@@ -69,6 +72,11 @@ document.querySelectorAll<HTMLButtonElement>('[data-back]').forEach((b) =>
   b.addEventListener('click', () => (connectedPort ? showPage('perform') : showPage('settings'))),
 );
 $('mixerBtn').addEventListener('click', () => showPage('mixer'));
+$('recordBtn').addEventListener('click', () => {
+  if (!engine) return;
+  showPage('recorder');
+  recorder.open();
+});
 $('listsBtn').addEventListener('click', () => showPage('lists'));
 $('settingsBtn').addEventListener('click', () => {
   void refreshPorts();
@@ -300,6 +308,38 @@ function selectStyle(i: number) {
   localStorage.setItem(SAVED_STYLE, styles[i].id);
   showStyle(styles[i]);
 }
+
+function selectStyleById(id: string) {
+  const i = styles.findIndex((s) => s.id === id);
+  if (i >= 0) selectStyle(i);
+}
+
+/** The player's own styles (recorded in EkidongoMIDI), stored in the app's data folder. */
+async function loadUserStyles() {
+  try {
+    for (const text of await listUserStyles()) {
+      const r = validateStyle(JSON.parse(text));
+      if (!r.ok) { console.warn('[styles] skipped an invalid user style', r.errors); continue; }
+      const i = styles.findIndex((s) => s.id === r.style.id);
+      if (i >= 0) styles[i] = r.style;
+      else styles.push(r.style);
+    }
+    styleIndex = Math.max(0, styles.findIndex((s) => s.id === (localStorage.getItem(SAVED_STYLE) ?? 'afrobeat-live')));
+  } catch (e) {
+    reportError(e, { step: 'load-user-styles' });
+  }
+}
+
+const recorder = createRecorder({
+  engine: () => engine,
+  currentStyle: () => styles[styleIndex],
+  styles,
+  selectStyleById,
+  rustNow,
+  send,
+  pushThru: async () => { if (engine) await pushThru(engine.settings); },
+  report: reportError,
+});
 
 // ---------- Style browser ----------
 
@@ -723,6 +763,7 @@ window.addEventListener('beforeunload', () => void panicNow());
 renderRegs();
 requestAnimationFrame(render);
 void (async () => {
+  await loadUserStyles();
   const ports = await refreshPorts();
   const saved = savedPorts();
   if (saved && ports.inputs.includes(saved.input) && ports.outputs.includes(saved.output)) {

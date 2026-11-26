@@ -20,6 +20,10 @@ export const disconnectPorts = () => invoke<void>('disconnect');
 export const panicNow = () => invoke<void>('panic');
 export const writeSetupFile = (path: string, contents: string) => invoke<void>('write_setup_file', { path, contents });
 export const readSetupFile = (path: string) => invoke<string>('read_setup_file', { path });
+export const listUserStyles = () => invoke<string[]>('list_user_styles');
+export const saveUserStyle = (id: string, json: string) => invoke<void>('save_user_style', { id, json });
+export const deleteUserStyle = (id: string) => invoke<void>('delete_user_style', { id });
+export const readMidiFile = async (path: string) => new Uint8Array(await invoke<number[]>('read_midi_file', { path }));
 
 let offset = 0;
 

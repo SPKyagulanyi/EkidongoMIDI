@@ -225,6 +225,69 @@ fn read_setup_file(path: String) -> Result<String, String> {
     std::fs::read_to_string(p).map_err(|e| e.to_string())
 }
 
+/// The player's own styles live in the app's data folder (e.g. %APPDATA%\com.ekidongomidi.desktop\styles).
+fn styles_dir(app: &AppHandle) -> Result<std::path::PathBuf, String> {
+    let dir = app.path().app_data_dir().map_err(|e| e.to_string())?.join("styles");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok(dir)
+}
+
+fn valid_style_id(id: &str) -> bool {
+    !id.is_empty() && id.len() <= 64 && id.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
+}
+
+#[tauri::command]
+fn list_user_styles(app: AppHandle) -> Result<Vec<String>, String> {
+    let mut out = Vec::new();
+    for entry in std::fs::read_dir(styles_dir(&app)?).map_err(|e| e.to_string())?.flatten() {
+        let p = entry.path();
+        let small = entry.metadata().map(|m| m.len() <= MAX_SETUP_FILE).unwrap_or(false);
+        if small && p.extension().and_then(|e| e.to_str()) == Some("json") {
+            if let Ok(text) = std::fs::read_to_string(&p) {
+                out.push(text);
+            }
+        }
+    }
+    Ok(out)
+}
+
+#[tauri::command]
+fn save_user_style(app: AppHandle, id: String, json: String) -> Result<(), String> {
+    if !valid_style_id(&id) {
+        return Err("Style id must be lowercase letters, digits and dashes".into());
+    }
+    if json.len() as u64 > MAX_SETUP_FILE {
+        return Err("Style too large".into());
+    }
+    std::fs::write(styles_dir(&app)?.join(format!("{id}.json")), json).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn delete_user_style(app: AppHandle, id: String) -> Result<(), String> {
+    if !valid_style_id(&id) {
+        return Err("Invalid style id".into());
+    }
+    let p = styles_dir(&app)?.join(format!("{id}.json"));
+    if p.exists() {
+        std::fs::remove_file(p).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+/// Read a MIDI file chosen in an open dialog, for importing a part.
+#[tauri::command]
+fn read_midi_file(path: String) -> Result<Vec<u8>, String> {
+    let p = std::path::PathBuf::from(&path);
+    let ok = p.extension().and_then(|e| e.to_str()).map(|e| e.eq_ignore_ascii_case("mid") || e.eq_ignore_ascii_case("midi")).unwrap_or(false);
+    if !ok {
+        return Err("Choose a .mid or .midi file".into());
+    }
+    if std::fs::metadata(&p).map_err(|e| e.to_string())?.len() > 2 * 1024 * 1024 {
+        return Err("MIDI file too large".into());
+    }
+    std::fs::read(p).map_err(|e| e.to_string())
+}
+
 /// Crash and error reporting for the Rust side (panics in any thread, including the MIDI
 /// scheduler). Off when the build has no DSN. No personal data is sent.
 fn init_error_reporting() -> Option<sentry::ClientInitGuard> {
@@ -255,7 +318,11 @@ pub fn run() {
             set_thru,
             panic,
             write_setup_file,
-            read_setup_file
+            read_setup_file,
+            list_user_styles,
+            save_user_style,
+            delete_user_style,
+            read_midi_file
         ])
         .build(tauri::generate_context!())
         .expect("error while building EkidongoMIDI");

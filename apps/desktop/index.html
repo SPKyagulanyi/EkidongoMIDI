@@ -95,6 +95,7 @@
         </div>
 
         <div class="row wrap">
+          <button id="recordBtn" class="secondary">Record</button>
           <button id="mixerBtn" class="secondary">Mixer</button>
           <button id="listsBtn" class="secondary">Set lists</button>
           <button id="settingsBtn" class="pill" aria-label="Settings">
@@ -215,6 +216,92 @@
             <button id="addEntry" class="secondary">Add current setup as a song</button>
           </div>
           <p class="muted small">A song remembers the style, tempo, section, voices, mixer and settings you have right now.</p>
+        </section>
+      </div>
+    </main>
+
+    <!-- Recorder: record or import parts into a style -->
+    <main id="recorder" class="page sub" hidden>
+      <header class="bar">
+        <div>
+          <h1>Record a part</h1>
+          <p class="muted small" id="recStyleLabel">—</p>
+        </div>
+        <div class="row wrap">
+          <button id="recSave" class="primary">Save style</button>
+          <button class="secondary back" data-back>Back to playing</button>
+        </div>
+      </header>
+
+      <div class="panels">
+        <section class="panel">
+          <h2>1. Style</h2>
+          <p class="muted small">You are editing your own copy; the original stays as it was.</p>
+          <label>Style name <input id="recName" type="text" /></label>
+          <details>
+            <summary>Start a new empty style instead</summary>
+            <div class="row wrap" style="margin-top: 10px">
+              <input id="newStyleName" type="text" placeholder="Name, e.g. Kadongo Kamu (mine)" class="grow" aria-label="New style name" />
+              <select id="newStyleMeter" aria-label="Time signature">
+                <option value="4/4">4/4</option><option value="3/4">3/4</option><option value="12/8">12/8</option><option value="6/8">6/8</option>
+              </select>
+              <input id="newStyleTempo" type="number" min="20" max="300" value="100" aria-label="Tempo in BPM" style="width: 90px" />
+              <button id="newStyle" class="secondary">Create</button>
+            </div>
+          </details>
+        </section>
+
+        <section class="panel">
+          <h2>2. What to record</h2>
+          <label>Section <select id="recSection"></select></label>
+          <label>Length <select id="recBars"><option value="1">1 bar</option><option value="2">2 bars</option><option value="4">4 bars</option><option value="8">8 bars</option></select></label>
+          <label>Part <select id="recPart"></select></label>
+          <div id="newPartBox" class="row wrap" hidden>
+            <input id="newPartName" type="text" placeholder="Part name, e.g. Lead guitar" class="grow" aria-label="New part name" />
+            <select id="newPartRole" aria-label="Part role">
+              <option value="bass">Bass</option><option value="chord">Chords (guitar, keys)</option><option value="pad">Pad / strings</option><option value="phrase">Melody / riff</option><option value="drums">Drums</option>
+            </select>
+            <select id="newPartProgram" aria-label="Instrument"></select>
+            <button id="addPart" class="secondary">Add part</button>
+          </div>
+          <label>When recording <select id="recMode"><option value="replace">Replace what is there</option><option value="add">Add to it (overdub)</option></select></label>
+        </section>
+
+        <section class="panel">
+          <h2>3. Record</h2>
+          <p id="recHint" class="hint"></p>
+          <div class="row wrap">
+            <label class="check"><input id="recCountIn" type="checkbox" checked /> 1-bar count-in</label>
+            <label class="check"><input id="recClick" type="checkbox" checked /> Metronome</label>
+          </div>
+          <div class="row wrap">
+            <label>Tighten timing
+              <select id="recQuantize"><option value="0">Off: keep my timing</option><option value="120">To 16th notes</option><option value="240">To 8th notes</option><option value="160">To 8th triplets</option><option value="80">To 16th triplets</option></select>
+            </label>
+            <label>Strength
+              <select id="recStrength"><option value="0.5">50%: keep some feel</option><option value="0.75">75%</option><option value="1">100%</option></select>
+            </label>
+          </div>
+          <div class="row wrap">
+            <button id="recRecord" class="record">● Record</button>
+            <button id="recPlay" class="secondary">▶ Play section</button>
+            <button id="recStop" class="secondary">■ Stop</button>
+          </div>
+          <p id="recStatus" class="rec-status" role="status">Ready.</p>
+          <div id="recTake" class="row wrap" hidden>
+            <button id="recKeep" class="primary">Keep this take</button>
+            <button id="recDiscard" class="secondary">Discard</button>
+          </div>
+          <div class="row wrap">
+            <button id="recUndo" class="secondary">Undo last change</button>
+            <button id="recImport" class="secondary">Import a MIDI file into this part…</button>
+            <button id="recExport" class="secondary">Export style file…</button>
+          </div>
+          <div id="midiChooser" class="row wrap" hidden>
+            <label>Track (MIDI channel) <select id="midiChannel"></select></label>
+            <label>From bar <select id="midiFromBar"></select></label>
+            <button id="midiUse" class="secondary">Use these notes</button>
+          </div>
         </section>
       </div>
     </main>
