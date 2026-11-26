@@ -137,3 +137,5 @@ input[type='text'] { font: inherit; color: var(--text); background: var(--bg); b
 .entries .etitle { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .entries .etitle span:first-child { font-weight: 700; }
 .entries button { min-height: 40px; padding: 0 10px; }
+.reg-grid button.clearing { border: 2px dashed #e5534b; }
+#clearReg[aria-pressed='true'] { background: #3a1d20; border-color: #e5534b; color: #ffb3b3; }

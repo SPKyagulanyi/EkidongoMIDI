@@ -37,6 +37,7 @@ let connectedPort = '';
 const lib = loadLibrary();
 let freeze = false;
 let saving = false;
+let clearing = false;
 
 const SECTION_NAMES: Record<string, string> = { fillA: 'Fill', fillB: 'Fill', fillC: 'Fill', fillD: 'Fill', break: 'Break' };
 const sectionName = (id: string) =>
@@ -427,7 +428,8 @@ function recall(reg: Registration) {
 
 function renderRegs() {
   const buttons = lib.bank.map((reg, i) => {
-    const b = el('button', { className: [reg ? 'filled' : '', saving ? 'saving' : ''].join(' ') },
+    const mode = saving ? 'saving' : clearing && reg ? 'clearing' : '';
+    const b = el('button', { className: [reg ? 'filled' : '', mode].join(' ') },
       el('b', { textContent: String(i + 1) }), el('span', { textContent: reg ? reg.name : 'empty' }));
     b.title = reg ? `${reg.name} · ${reg.tempo} BPM` : 'Empty: press Save, then this button';
     b.addEventListener('click', () => pressReg(i));
@@ -435,13 +437,19 @@ function renderRegs() {
   });
   $('regButtons').replaceChildren(...buttons);
   $('saveReg').setAttribute('aria-pressed', String(saving));
+  $('clearReg').setAttribute('aria-pressed', String(clearing));
   $('freeze').setAttribute('aria-pressed', String(freeze));
 }
+/** Save mode stores, Clear mode empties, otherwise a filled button recalls (an empty one stores). */
 function pressReg(i: number) {
   const s = status();
   if (!s || !engine) return;
   const reg = lib.bank[i];
-  if (saving || !reg) {
+  if (clearing) {
+    lib.bank[i] = null;
+    clearing = false;
+    persist();
+  } else if (saving || !reg) {
     const style = styles[styleIndex];
     lib.bank[i] = capture(`${style?.name.replace(' · Live Drums', '') ?? 'Setup'} ${Math.round(s.tempo)}`, s, engine.settings.splitPoint);
     saving = false;
@@ -449,7 +457,8 @@ function pressReg(i: number) {
   } else recall(reg);
   renderRegs();
 }
-$('saveReg').addEventListener('click', () => { saving = !saving; renderRegs(); });
+$('saveReg').addEventListener('click', () => { saving = !saving; clearing = false; renderRegs(); });
+$('clearReg').addEventListener('click', () => { clearing = !clearing; saving = false; renderRegs(); });
 $('freeze').addEventListener('click', () => { freeze = !freeze; renderRegs(); });
 
 // ---------- Set lists ----------
