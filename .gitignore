@@ -4,6 +4,7 @@ coverage/
 *.log
 .env
 .env.*
+!.env.example
 # Private Yamaha style files for importer tests: never commit (copyrighted)
 private-test-styles/
 # Timing measurement exports
