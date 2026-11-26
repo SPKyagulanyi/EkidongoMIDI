@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EkidongoMIDI</title>
+    <link rel="stylesheet" href="/src/app.css" />
+  </head>
+  <body>
+    <div id="connect" class="screen">
+      <h1>EkidongoMIDI</h1>
+      <p class="muted">Connect your keyboard by USB, switch it on, then choose it below.</p>
+      <label>Keyboard (MIDI in) <select id="inPort"></select></label>
+      <label>Sound (MIDI out) <select id="outPort"></select></label>
+      <div class="row">
+        <button id="refresh" class="secondary">Refresh</button>
+        <button id="connectBtn" class="primary">Connect</button>
+      </div>
+      <p id="connectMsg" class="msg" role="status"></p>
+    </div>
+
+    <div id="perform" class="screen" hidden>
+      <header class="bar">
+        <div class="row">
+          <button id="prevStyle" class="icon" aria-label="Previous style">‹</button>
+          <div class="style">
+            <div id="styleName" class="title">—</div>
+            <div id="styleMeta" class="muted small">—</div>
+          </div>
+          <button id="nextStyle" class="icon" aria-label="Next style">›</button>
+        </div>
+        <div class="row">
+          <button id="tempoDown" class="icon" aria-label="Slower">−</button>
+          <div class="tempo"><span id="tempo">—</span> <span class="muted small">BPM</span></div>
+          <button id="tempoUp" class="icon" aria-label="Faster">+</button>
+          <div id="beats" class="beats" aria-hidden="true"></div>
+        </div>
+        <div class="row">
+          <span id="portName" class="pill">—</span>
+          <button id="panic" class="danger">Panic</button>
+        </div>
+      </header>
+
+      <section class="info">
+        <div class="card chord">
+          <div class="label">Chord</div>
+          <div id="chord" class="big">—</div>
+          <div class="muted small">Left hand below <span id="splitName">F#3</span></div>
+        </div>
+        <div class="card now">
+          <div id="nowLabel" class="label">Stopped</div>
+          <div id="section" class="big2">Main A</div>
+          <div id="next" class="muted">Press Start, an Intro, or play a chord</div>
+        </div>
+      </section>
+
+      <section class="sections" aria-label="Sections">
+        <div class="grid6">
+          <button data-cmd="intro" data-n="1">Intro 1</button>
+          <button data-cmd="intro" data-n="2">Intro 2</button>
+          <button data-cmd="intro" data-n="3">Intro 3</button>
+          <button data-cmd="ending" data-n="1">Ending 1</button>
+          <button data-cmd="ending" data-n="2">Ending 2</button>
+          <button data-cmd="ending" data-n="3">Ending 3</button>
+        </div>
+        <div class="grid4 mains">
+          <button data-cmd="main" data-id="mainA">Main A</button>
+          <button data-cmd="main" data-id="mainB">Main B</button>
+          <button data-cmd="main" data-id="mainC">Main C</button>
+          <button data-cmd="main" data-id="mainD">Main D</button>
+        </div>
+        <div class="grid4">
+          <button data-cmd="fill">Fill</button>
+          <button data-cmd="break">Break</button>
+          <button id="sync" aria-pressed="true">Sync Start</button>
+          <button id="startStop" class="start">Start</button>
+        </div>
+      </section>
+
+      <footer class="muted small keys">
+        Keys: Space start/stop · A–D main · F fill · E ending · ←/→ style · ↑/↓ tempo · Esc panic
+      </footer>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -12,3 +12,5 @@ timing-results/*.json
 __pycache__/
 # Rust build output
 target/
+# Tauri generated schemas
+apps/desktop/src-tauri/gen/
