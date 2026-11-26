@@ -10,7 +10,7 @@
  */
 import { detectChordWithMode, type ChordMode } from '../chordModes.ts';
 import type { Chord } from '../chords.ts';
-import type { Style } from '../style/schema.ts';
+import type { SectionId, Style } from '../style/schema.ts';
 import type { MainId } from './arrangement.ts';
 import { StylePlayer, type MidiEvent } from './player.ts';
 
@@ -78,6 +78,9 @@ export type EngineCommand =
   | { type: 'ending'; n: 1 | 2 | 3 }
   | { type: 'fadeIn' }
   | { type: 'fadeOut' }
+  /** Repeat one section from time `at` (recording / auditioning); panel requests are ignored until unloop. */
+  | { type: 'loop'; section: SectionId; at?: number }
+  | { type: 'unloop' }
   | { type: 'tempo'; bpm: number }
   | { type: 'mute'; part: string; muted: boolean }
   | { type: 'partVolume'; part: string; volume: number }
@@ -241,6 +244,12 @@ export class ArrangerEngine {
       case 'fadeOut':
         if (p.isRunning) this.fade = { dir: 'out', start: now, end: now + this.config.fadeMs, emittedUntil: now };
         break;
+      case 'loop':
+        if (p.isRunning) this.stopNow(now);
+        a.setLoop(cmd.section);
+        p.startSection(Math.max(now, cmd.at ?? now), cmd.section);
+        break;
+      case 'unloop': a.setLoop(null); break;
       case 'tempo': p.setTempo(cmd.bpm, now); break;
       case 'mute': p.setMuted(cmd.part, cmd.muted, now); break;
       case 'partVolume': {

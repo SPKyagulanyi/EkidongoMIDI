@@ -29,6 +29,20 @@ export class Arrangement {
   private lastMain: MainId = 'mainA';
   private queue: SectionId[] = [];
   private readonly available: ReadonlySet<SectionId>;
+  /** When set, this one section repeats and panel requests are ignored (recording / auditioning). */
+  private loop: SectionId | null = null;
+
+  setLoop(section: SectionId | null): void {
+    this.loop = section;
+  }
+
+  /** Start playback directly on a section (any kind), e.g. to record or audition it. */
+  startSection(section: SectionId): void {
+    this.running = true;
+    this.section = section;
+    this.barInSection = 0;
+    this.queue = [];
+  }
 
   constructor(available: ReadonlySet<SectionId>) {
     this.available = available;
@@ -115,6 +129,11 @@ export class Arrangement {
    */
   nextBar(barsOf: (s: SectionId) => number): ArrangementSnapshot | null {
     if (!this.running) return null;
+    if (this.loop) {
+      this.section = this.loop;
+      this.barInSection = (this.barInSection + 1) % Math.max(1, barsOf(this.loop));
+      return this.snapshot();
+    }
     const bar = this.barInSection + 1;
     const finished = bar >= barsOf(this.section);
     const head = this.queue[0];

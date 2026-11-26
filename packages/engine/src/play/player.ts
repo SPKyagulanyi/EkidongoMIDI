@@ -138,6 +138,15 @@ export class StylePlayer {
     return this.muted.has(partId);
   }
 
+  /** Start on a given section at time `at` (recording, auditioning). */
+  startSection(at: number, section: SectionId): void {
+    if (this.running) return;
+    this.arrangement.startSection(section);
+    this.running = true;
+    this.barStart = at;
+    this.renderedUntil = at;
+  }
+
   start(now: number, intro?: 'intro1' | 'intro2' | 'intro3'): void {
     if (this.running) return;
     this.arrangement.start(intro);
