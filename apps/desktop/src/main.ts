@@ -205,14 +205,42 @@ const currentTempo = () => (engine ? engine.status(rustNow()).tempo : 120);
 $('tempoDown').addEventListener('click', () => setTempo(currentTempo() - 1));
 $('tempoUp').addEventListener('click', () => setTempo(currentTempo() + 1));
 
+/**
+ * Tap tempo (arranger-keyboard behaviour):
+ * - Stopped: tap one bar of beats (4 in 4/4, 3 in 3/4, 4 dotted-quarter beats in 12/8). The tempo is set
+ *   from the taps and the band starts on the next downbeat, exactly where the next tap would fall.
+ * - Playing: every tap from the 3rd on adjusts the tempo to the average of the recent taps.
+ */
 let taps: number[] = [];
-$('tapBtn').addEventListener('click', () => {
-  const t = performance.now();
+const tapBtn = $('tapBtn');
+tapBtn.addEventListener('pointerdown', (e) => {
+  e.preventDefault(); // react on press, not release: timing matters
+  if (!engine) return;
+  const t = rustNow();
   if (taps.length && t - taps[taps.length - 1]! > 2000) taps = [];
-  taps = [...taps, t].slice(-5);
-  if (taps.length >= 3) {
-    const gaps = taps.slice(1).map((x, i) => x - taps[i]!);
-    setTempo(60000 / (gaps.reduce((a, b) => a + b, 0) / gaps.length));
+  taps = [...taps, t].slice(-8);
+  const s = engine.status(t);
+  const gaps = taps.slice(1).map((x, i) => x - taps[i]!);
+  const avg = gaps.length ? gaps.reduce((a, b) => a + b, 0) / gaps.length : 0;
+  const bpmFromTaps = avg ? (60000 / avg) * s.quartersPerBeat : 0;
+  if (s.running) {
+    if (taps.length >= 3) setTempo(bpmFromTaps);
+    tapBtn.textContent = 'Tap';
+    return;
+  }
+  tapBtn.textContent = `${taps.length} / ${s.beatsPerBar}`;
+  if (taps.length >= s.beatsPerBar) {
+    setTempo(bpmFromTaps);
+    command({ type: 'start', at: t + avg });
+    taps = [];
+    setTimeout(() => (tapBtn.textContent = 'Tap'), 400);
+  }
+});
+tapBtn.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    e.stopPropagation();
+    tapBtn.dispatchEvent(new PointerEvent('pointerdown'));
   }
 });
 

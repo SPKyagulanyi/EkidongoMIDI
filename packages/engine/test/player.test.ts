@@ -145,6 +145,22 @@ describe('ArrangerEngine', () => {
     expect(ons(evs).length).toBeGreaterThan(0);
   });
 
+  it('starts at a future time and plays nothing before it (tap-tempo start)', () => {
+    const e = new ArrangerEngine(style);
+    e.tick(0);
+    e.command({ type: 'start', at: 500 }, 100);
+    expect(ons(e.tick(300))).toEqual([]); // horizon 340 < 500
+    const first = ons(e.tick(480)).filter((x) => ch(x) === 10);
+    expect(first[0]?.t).toBe(500);
+  });
+
+  it('reports quarters per beat for the meter', () => {
+    const e = new ArrangerEngine(style);
+    expect(e.status(0).quartersPerBeat).toBe(1);
+    const e8 = new ArrangerEngine({ ...style, timeSignature: [12, 8] });
+    expect(e8.status(0).quartersPerBeat).toBe(1.5);
+  });
+
   it('leaves the right hand to the platform when thruInEngine is off', () => {
     const e = new ArrangerEngine(style, { thruInEngine: false });
     expect(e.input([0x90, 72, 100], 0)).toEqual([]);

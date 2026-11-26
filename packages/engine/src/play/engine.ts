@@ -46,7 +46,8 @@ export const DEFAULT_CONFIG: EngineConfig = {
 };
 
 export type EngineCommand =
-  | { type: 'start' }
+  /** Start now, or at a future time `at` (tap-tempo start lands on the next downbeat). */
+  | { type: 'start'; at?: number }
   | { type: 'stop' }
   | { type: 'toggleStart' }
   | { type: 'main'; id: MainId }
@@ -71,6 +72,8 @@ export interface EngineStatus {
   tempo: number;
   beat: number;
   beatsPerBar: number;
+  /** Quarter notes per counted beat: 1 in 4/4 and 3/4, 1.5 in 6/8 and 12/8 (dotted-quarter beats). */
+  quartersPerBeat: number;
   syncStart: boolean;
   muted: string[];
   /** Sections this style has; the panel dims the others. */
@@ -142,7 +145,7 @@ export class ArrangerEngine {
     const p = this.player;
     const a = p.arrangement;
     switch (cmd.type) {
-      case 'start': p.start(now); break;
+      case 'start': p.start(Math.max(now, cmd.at ?? now)); break;
       case 'stop': this.pending.push(...p.stop(now)); break;
       case 'toggleStart':
         if (p.isRunning) this.pending.push(...p.stop(now));
@@ -211,6 +214,7 @@ export class ArrangerEngine {
       tempo: this.player.bpm,
       beat,
       beatsPerBar,
+      quartersPerBeat: (4 * style.timeSignature[0]) / style.timeSignature[1] / beatsPerBar,
       syncStart: this.config.syncStart,
       muted: style.parts.filter((p) => this.player.isMuted(p.id)).map((p) => p.id),
       available: Object.keys(style.sections),
