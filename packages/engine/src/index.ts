@@ -7,6 +7,7 @@ export * from './style/grid.ts';
 export * from './style/derive.ts';
 export * from './style/edit.ts';
 export * from './midi/smf.ts';
+export * from './import/yamaha.ts';
 export * from './play/repitch.ts';
 export * from './play/arrangement.ts';
 export * from './play/player.ts';

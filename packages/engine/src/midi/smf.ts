@@ -13,6 +13,17 @@ export interface SmfNote {
   velocity: number;
 }
 
+/** A program change or controller message (kept for importing instrument setups). */
+export interface SmfControl {
+  tick: number;
+  channel: number; // 0-15
+  kind: 'program' | 'cc';
+  /** Program number, or controller number for 'cc'. */
+  d1: number;
+  /** Controller value (0 for 'program'). */
+  d2: number;
+}
+
 export interface SmfFile {
   format: number;
   ppq: number;
@@ -20,6 +31,9 @@ export interface SmfFile {
   tempoUsPerQuarter: number;
   timeSignature: [number, number] | null;
   notes: SmfNote[];
+  /** Marker meta events (e.g. a Yamaha style's section names), in order. */
+  markers: { tick: number; text: string }[];
+  controls: SmfControl[];
 }
 
 class Reader {
@@ -57,7 +71,7 @@ export function parseSmf(bytes: Uint8Array): SmfFile {
   const division = r.u16();
   r.skip(hlen - 6);
   if (division & 0x8000) throw new Error('SMPTE time division is not supported');
-  const out: SmfFile = { format, ppq: division, tempoUsPerQuarter: 500000, timeSignature: null, notes: [] };
+  const out: SmfFile = { format, ppq: division, tempoUsPerQuarter: 500000, timeSignature: null, notes: [], markers: [], controls: [] };
   let tempoSeen = false;
 
   for (let t = 0; t < ntracks && !r.done; t++) {
@@ -86,6 +100,10 @@ export function parseSmf(bytes: Uint8Array): SmfFile {
           const den = 2 ** r.u8();
           out.timeSignature = [num, den];
           r.skip(l - 2);
+        } else if (type === 0x06) {
+          let text = '';
+          for (let i = 0; i < l; i++) text += String.fromCharCode(r.u8());
+          out.markers.push({ tick, text: text.trim() });
         } else r.skip(l);
         continue;
       }
@@ -94,6 +112,8 @@ export function parseSmf(bytes: Uint8Array): SmfFile {
       const ch = status & 0x0f;
       const d1 = r.u8();
       const d2 = kind === 0xc0 || kind === 0xd0 ? 0 : r.u8();
+      if (kind === 0xc0) out.controls.push({ tick, channel: ch, kind: 'program', d1, d2: 0 });
+      else if (kind === 0xb0) out.controls.push({ tick, channel: ch, kind: 'cc', d1, d2 });
       if (kind === 0x90 && d2 > 0) {
         const n: SmfNote = { tick, duration: 0, channel: ch, note: d1, velocity: d2 };
         out.notes.push(n);

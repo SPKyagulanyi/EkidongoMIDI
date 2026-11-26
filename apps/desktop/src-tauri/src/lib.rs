@@ -274,13 +274,14 @@ fn delete_user_style(app: AppHandle, id: String) -> Result<(), String> {
     Ok(())
 }
 
-/// Read a MIDI file chosen in an open dialog, for importing a part.
+/// Read a MIDI or Yamaha style file chosen in an open dialog (part import, style import).
 #[tauri::command]
 fn read_midi_file(path: String) -> Result<Vec<u8>, String> {
+    const ALLOWED: [&str; 7] = ["mid", "midi", "sty", "prs", "sst", "bcs", "fps"];
     let p = std::path::PathBuf::from(&path);
-    let ok = p.extension().and_then(|e| e.to_str()).map(|e| e.eq_ignore_ascii_case("mid") || e.eq_ignore_ascii_case("midi")).unwrap_or(false);
+    let ok = p.extension().and_then(|e| e.to_str()).map(|e| ALLOWED.iter().any(|a| e.eq_ignore_ascii_case(a))).unwrap_or(false);
     if !ok {
-        return Err("Choose a .mid or .midi file".into());
+        return Err("Choose a MIDI file (.mid) or a Yamaha style file (.sty, .prs, .sst, .bcs, .fps)".into());
     }
     if std::fs::metadata(&p).map_err(|e| e.to_string())?.len() > 2 * 1024 * 1024 {
         return Err("MIDI file too large".into());

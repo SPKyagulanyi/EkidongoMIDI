@@ -3,7 +3,7 @@ import {
   type ChordMode, type EngineCommand, type EngineStatus, type MainId, type Style, type VoiceSlot,
 } from '@ekidongo/engine';
 import { open as openDialog, save as saveDialog } from '@tauri-apps/plugin-dialog';
-import { connectPorts, disconnectPorts, listPorts, listUserStyles, panicNow, pushThru, readSetupFile, runEngine, rustNow, send, syncClock, writeSetupFile } from './bridge.ts';
+import { connectPorts, disconnectPorts, listPorts, listUserStyles, panicNow, pushThru, readMidiFile, readSetupFile, runEngine, rustNow, saveUserStyle, send, syncClock, writeSetupFile } from './bridge.ts';
 import { createRecorder } from './recorder.ts';
 import { appVersion, initObservability, reportError } from './observability.ts';
 import { checkForUpdate, hasUpdate, installUpdate } from './updates.ts';
@@ -12,7 +12,7 @@ import {
   type Registration, type Setlist,
 } from './library.ts';
 import { loadStyles } from './styles.ts';
-import { validateStyle } from '@ekidongo/engine';
+import { importYamahaStyle, validateStyle, YAMAHA_STYLE_EXTENSIONS } from '@ekidongo/engine';
 
 const $ = <T extends HTMLElement>(id: string): T => {
   const e = document.getElementById(id);
@@ -32,7 +32,7 @@ initObservability();
 const SAVED_PORTS = 'ekidongo.ports';
 const SAVED_STYLE = 'ekidongo.style';
 const SAVED_SETTINGS = 'ekidongo.settings';
-const CATEGORY_ORDER = ['My styles', 'African', 'East African', 'Church', 'Caribbean', 'Latin', 'Pop & RnB', 'Ballroom & March'];
+const CATEGORY_ORDER = ['My styles', 'Yamaha (yours)', 'African', 'East African', 'Church', 'Caribbean', 'Latin', 'Pop & RnB', 'Ballroom & March'];
 const MODE_NAMES: Record<ChordMode, string> = { fingered: 'Fingered', multi: 'Multi Finger', single: 'Single Finger' };
 
 const { styles, errors } = loadStyles();
@@ -214,6 +214,41 @@ $('importSetups').addEventListener('click', async () => {
   } catch (e) {
     setupsMsg.className = 'msg';
     setupsMsg.textContent = String(e instanceof Error ? e.message : e);
+  }
+});
+
+// ---------- Import Yamaha styles (personal library only) ----------
+
+$('importYamaha').addEventListener('click', async () => {
+  const msg = $('importMsg');
+  try {
+    const picked = await openDialog({ multiple: true, directory: false, filters: [{ name: 'Yamaha styles', extensions: [...YAMAHA_STYLE_EXTENSIONS] }] });
+    const paths = Array.isArray(picked) ? picked : typeof picked === 'string' ? [picked] : [];
+    if (!paths.length) return;
+    let ok = 0;
+    const failed: string[] = [];
+    for (const [i, path] of paths.entries()) {
+      const file = path.split(/[\\/]/).pop() ?? path;
+      msg.className = 'msg';
+      msg.textContent = `Importing ${i + 1} of ${paths.length}: ${file}`;
+      try {
+        const { style } = importYamahaStyle(await readMidiFile(path), file);
+        const r = validateStyle(style);
+        if (!r.ok) throw new Error(r.errors[0]);
+        await saveUserStyle(r.style.id, JSON.stringify(r.style));
+        const at = styles.findIndex((s) => s.id === r.style.id);
+        if (at >= 0) styles[at] = r.style;
+        else styles.push(r.style);
+        ok++;
+      } catch (e) {
+        failed.push(`${file} (${e instanceof Error ? e.message : String(e)})`);
+      }
+    }
+    msg.className = failed.length ? 'msg' : 'msg ok';
+    msg.textContent = `Imported ${ok} of ${paths.length} styles into "Yamaha (yours)".${failed.length ? ` Not imported: ${failed.slice(0, 3).join('; ')}${failed.length > 3 ? '…' : ''}` : ''} Yamaha voices play with your keyboard's nearest General MIDI sounds.`;
+  } catch (e) {
+    reportError(e, { step: 'import-yamaha' });
+    msg.textContent = `Import failed: ${String(e)}`;
   }
 });
 
