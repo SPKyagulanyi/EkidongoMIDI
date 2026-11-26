@@ -63,6 +63,11 @@
           <p class="muted small">Free software under the GNU GPL v3. The style library is not covered by the GPL.</p>
           <p class="muted small">"Live Drums" styles use drum performances from the Groove MIDI Dataset by Google LLC, licensed under CC BY 4.0 (magenta.tensorflow.org/datasets/groove). Selected bars were cut and notes mapped to General MIDI.</p>
           <p class="muted small">Error reports, if any, are sent without personal data so problems can be fixed.</p>
+          <div class="row wrap">
+            <button id="checkUpdate" class="secondary">Check for updates</button>
+            <button id="installUpdate" class="primary" hidden>Install update and restart</button>
+          </div>
+          <p id="updateMsg" class="msg" role="status"></p>
         </section>
       </div>
     </main>

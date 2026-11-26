@@ -1,8 +1,10 @@
 name: Release (Windows installer)
 
-# Builds the Windows installer on a version tag (v0.1.0, v0.2.0-beta.1, ...) or by hand.
-# Tagged builds are attached to a GitHub release (marked pre-release while in beta).
-# Error reporting is compiled in only when the SENTRY_DSN_DESKTOP repository secret is set.
+# Builds the signed Windows installer on a version tag (v0.2.0, v0.2.0-beta.1, ...) or by hand.
+#  - vX.Y.Z tags become the "latest" release: installed apps offer it as an update (latest.json).
+#  - Tags with a suffix (v0.2.0-beta.1) become pre-releases: never offered as automatic updates.
+# Secrets: TAURI_SIGNING_PRIVATE_KEY(+_PASSWORD) sign updates (required for tagged releases);
+# SENTRY_DSN_DESKTOP turns on error reporting (optional).
 
 on:
   push:
@@ -28,21 +30,58 @@ jobs:
           workspaces: apps/desktop/src-tauri -> target
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
-      - name: Build installer
+
+      - name: Tag must match the app version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          app=$(node -p "require('./apps/desktop/src-tauri/tauri.conf.json').version")
+          tag="${GITHUB_REF_NAME#v}"
+          if [ "${tag%%-*}" != "$app" ]; then echo "Tag $GITHUB_REF_NAME does not match app version $app"; exit 1; fi
+
+      - name: Build signed installer
         env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN_DESKTOP }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN_DESKTOP }}
         run: pnpm --filter @ekidongo/desktop tauri build
+
+      - name: Write latest.json (update manifest)
+        shell: bash
+        run: |
+          exe=$(ls apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe)
+          name=$(basename "$exe")
+          version=$(node -p "require('./apps/desktop/src-tauri/tauri.conf.json').version")
+          EXE="$exe" NAME="$name" VERSION="$version" TAG="${GITHUB_REF_NAME}" REPO="${GITHUB_REPOSITORY}" node -e '
+            const fs = require("fs");
+            const e = process.env;
+            fs.writeFileSync("latest.json", JSON.stringify({
+              version: e.VERSION,
+              notes: `EkidongoMIDI ${e.TAG}`,
+              pub_date: new Date().toISOString(),
+              platforms: { "windows-x86_64": {
+                signature: fs.readFileSync(e.EXE + ".sig", "utf8").trim(),
+                url: `https://github.com/${e.REPO}/releases/download/${e.TAG}/${e.NAME}`,
+              } },
+            }, null, 2));'
+          cat latest.json
+
       - uses: actions/upload-artifact@v7
         with:
           name: EkidongoMIDI-windows-installer
-          path: apps/desktop/src-tauri/target/release/bundle/nsis/*.exe
+          path: |
+            apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe
+            latest.json
           if-no-files-found: error
-      - name: Attach to a GitHub release (tags only)
+
+      - name: Publish the GitHub release (tags only)
         if: startsWith(github.ref, 'refs/tags/')
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${{ github.ref_name }}" apps/desktop/src-tauri/target/release/bundle/nsis/*.exe \
-            --title "EkidongoMIDI ${{ github.ref_name }}" --generate-notes --prerelease
+          pre=""
+          case "$GITHUB_REF_NAME" in *-*) pre="--prerelease";; esac
+          gh release create "$GITHUB_REF_NAME" apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe latest.json \
+            --title "EkidongoMIDI $GITHUB_REF_NAME" --generate-notes $pre

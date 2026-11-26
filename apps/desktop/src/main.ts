@@ -3,8 +3,9 @@ import {
   type ChordMode, type EngineCommand, type EngineStatus, type MainId, type Style, type VoiceSlot,
 } from '@ekidongo/engine';
 import { open as openDialog, save as saveDialog } from '@tauri-apps/plugin-dialog';
-import { connectPorts, listPorts, panicNow, pushThru, readSetupFile, runEngine, rustNow, send, syncClock, writeSetupFile } from './bridge.ts';
+import { connectPorts, disconnectPorts, listPorts, panicNow, pushThru, readSetupFile, runEngine, rustNow, send, syncClock, writeSetupFile } from './bridge.ts';
 import { appVersion, initObservability, reportError } from './observability.ts';
+import { checkForUpdate, hasUpdate, installUpdate } from './updates.ts';
 import {
   activeSetlist, BANK_SIZE, capture, exportSetups, importSetups, loadLibrary, moveEntry, newId, recallPlan, saveLibrary, step,
   type Registration, type Setlist,
@@ -121,7 +122,7 @@ async function connect(input: string, output: string) {
     msg.className = 'msg ok';
     msg.textContent = `Connected to ${output}.`;
     await startEngine();
-    $('portName').textContent = output;
+    if (!hasUpdate()) $('portName').textContent = output;
     showPage('perform');
   } catch (e) {
     reportError(e, { step: 'connect' });
@@ -207,6 +208,51 @@ $('importSetups').addEventListener('click', async () => {
     setupsMsg.textContent = String(e instanceof Error ? e.message : e);
   }
 });
+
+// ---------- Updates ----------
+
+const updateMsg = $('updateMsg');
+async function lookForUpdate(manual: boolean) {
+  try {
+    if (manual) { updateMsg.className = 'msg'; updateMsg.textContent = 'Checking…'; }
+    const u = await checkForUpdate();
+    $('installUpdate').hidden = !u;
+    if (u) {
+      updateMsg.className = 'msg ok';
+      const firstLine = u.notes?.split(/\r?\n/)[0] ?? '';
+      updateMsg.textContent = `Version ${u.version} is available.${firstLine ? ` ${firstLine}` : ''}`;
+      $('portName').textContent = 'Update available';
+    } else if (manual) {
+      updateMsg.className = 'msg ok';
+      updateMsg.textContent = `You have the latest version (${appVersion}).`;
+    }
+  } catch (e) {
+    if (manual) { updateMsg.className = 'msg'; updateMsg.textContent = `Could not check for updates: ${String(e)}`; }
+    console.warn('[updates]', e);
+  }
+}
+$('checkUpdate').addEventListener('click', () => void lookForUpdate(true));
+$('installUpdate').addEventListener('click', async () => {
+  if (!hasUpdate()) return;
+  if (status()?.running) {
+    updateMsg.className = 'msg';
+    updateMsg.textContent = 'Stop the band first: the update restarts EkidongoMIDI.';
+    return;
+  }
+  try {
+    updateMsg.className = 'msg';
+    updateMsg.textContent = 'Downloading…';
+    await installUpdate(
+      (pct) => (updateMsg.textContent = pct === null ? 'Downloading…' : `Downloading… ${pct}%`),
+      async () => { if (engine) send(engine.panic(rustNow())); await disconnectPorts(); }, // hands the keyboard back first
+    );
+  } catch (e) {
+    reportError(e, { step: 'install-update' });
+    updateMsg.textContent = `Update failed: ${String(e)}`;
+  }
+});
+// Check quietly a little after start-up (never during the first seconds of playing).
+setTimeout(() => void lookForUpdate(false), 15000);
 
 // ---------- Engine ----------
 

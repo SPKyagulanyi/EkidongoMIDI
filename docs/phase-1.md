@@ -26,4 +26,4 @@ waits for JavaScript.
 - [x] M3 performance screen
 - [x] M4 registrations and set lists (incl. export/import)
 - [ ] M5 first reviewed styles
-- [~] M6 release pipeline: installer, CI release job, desktop error reporting done; code signing and auto-update need decisions
+- [~] M6 release pipeline: signed installer, CI releases, auto-update, desktop error reporting done; installer code signing (certificate) pending
