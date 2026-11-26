@@ -6,13 +6,14 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ArrangerEngine, barTicks, makeChord, validateStyle, type MidiEvent, type Style } from '../../packages/engine/src/index.ts';
+import { ArrangerEngine, barTicks, importYamahaStyle, makeChord, validateStyle, type MidiEvent, type Style } from '../../packages/engine/src/index.ts';
 
 const root = join(import.meta.dirname, '..', '..', 'packages', 'styles');
 const [out, ...ids] = process.argv.slice(2);
 if (!out || ids.length === 0) throw new Error('usage: render-events.ts <out.json> <style-id> ...');
 
 function load(id: string): Style {
+  if (/\.(sty|prs|sst|bcs|fps)$/i.test(id)) return importYamahaStyle(readFileSync(id), id.split(/[\\/]/).pop()!).style;
   for (const dir of ['live', 'prototype']) {
     try {
       const r = validateStyle(JSON.parse(readFileSync(join(root, dir, `${id}.json`), 'utf8')));
@@ -48,7 +49,7 @@ const result = ids.map((id) => {
   const end = startAt + bars * barMs;
   events.push(...eng.panic(end));
   return {
-    id, name: style.name, tempo: style.tempo, durationMs: Math.round(end + 1500),
+    id: style.id, name: style.name, tempo: style.tempo, durationMs: Math.round(end + 1500),
     events: events.filter((e) => e.t <= end).sort((a, b) => a.t - b.t).map((e) => [Math.round(e.t * 10) / 10, ...e.data]),
   };
 });
