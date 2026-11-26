@@ -1,5 +1,7 @@
 export * from './music.ts';
 export * from './chords.ts';
+export * from './chordModes.ts';
+export * from './gm.ts';
 export * from './style/schema.ts';
 export * from './style/grid.ts';
 export * from './style/derive.ts';
